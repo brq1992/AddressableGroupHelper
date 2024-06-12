@@ -6,14 +6,16 @@ using System.IO;
 using UnityEditor;
 using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings;
+using UnityEditor.AddressableAssets.Settings.GroupSchemas;
 using UnityEngine;
-using static UnityEngine.EventSystems.EventTrigger;
 
 public class AddresaableTempraryTester : MonoBehaviour
 {
     static string assetFilter = "t:Object";
     private static List<string> _ignoreTypeList = new List<string> { ".tpsheet", ".cginc", ".cs", ".dll", ".asset" };
 
+
+    [MenuItem("Tools/AddressableAssetManager/Classify Asset to Group")]
     [MenuItem("Assets/AddressableAssetManager/Test/Classify Asset to Group")]
     public static void MoveAssetToProperGroup()
     {
@@ -21,11 +23,9 @@ public class AddresaableTempraryTester : MonoBehaviour
         var ruleGUIDs = AssetDatabase.FindAssets(ruleFilter, 
             new[] { AddreaableToolKey.RuleSearchPath });
 
-        string assetFilter = "t:Object";
         foreach(var item in ruleGUIDs)
         {
             DS(item);
-
         }
 
     }
@@ -39,48 +39,49 @@ public class AddresaableTempraryTester : MonoBehaviour
         //Debug.LogError("dic " + dic);
 
         var rootRule = (AddressableAssetRule)AssetDatabase.LoadAssetAtPath(guidPath, typeof(ScriptableObject));
-        if(rootRule._packModel == PackMode.PackTogether)
+        var name = Path.GetFileNameWithoutExtension(guidPath);
+        AddressableAssetSettings setting = AddressableAssetSettingsDefaultObject.Settings;
+        var group = setting.FindGroup(name);
+        if (group == null)
         {
-            var assetGUIDs = AssetDatabase.FindAssets(assetFilter, new string[] { dic });
-
+            group = setting.CreateGroup(name, false, false, false, new List<AddressableAssetGroupSchema>() { new BundledAssetGroupSchema(), new ContentUpdateGroupSchema() });
         }
-        else
+        var assetSchema = group.GetSchema<BundledAssetGroupSchema>();
+        assetSchema.BundleNaming = BundledAssetGroupSchema.BundleNamingStyle.NoHash;
+        assetSchema.BundleMode = rootRule._packModel == PackMode.PackSeparately ? BundledAssetGroupSchema.BundlePackingMode.PackSeparately : 
+            BundledAssetGroupSchema.BundlePackingMode.PackTogether;
+        assetSchema.UseAssetBundleCrc = false;
+        var updateSchema = group.GetSchema<ContentUpdateGroupSchema>();
+        updateSchema.StaticContent = true;
+
+        var assetGUIDs = AssetDatabase.FindAssets(assetFilter, new string[] { dic });
+        foreach (var guid in assetGUIDs)
         {
-            var assetGUIDs = AssetDatabase.FindAssets(assetFilter, new string[] { dic });
-            foreach (var guid in assetGUIDs)
+            var assetPath = AssetDatabase.GUIDToAssetPath(guid);
+            //Debug.LogError("assetPath " + assetPath);
+            if (!IsValidAsset(assetPath))
             {
-                var assetPath = AssetDatabase.GUIDToAssetPath(guid);
-                //Debug.LogError("assetPath " + assetPath);
-                if (!IsValidAsset(assetPath))
-                {
-                    continue;
-                }
-
-                if (IsAFolder(assetPath))
-                {
-                    //DoSthWhenFolder(assetPath);
-                    continue;
-                }
-
-                //if(!IsAssetSameDicWithRule(Path.GetDirectoryName(assetPath), dic))
-                //{
-                //    //var rootRule = (AddressableAssetRule)AssetDatabase.LoadAssetAtPath(guidPath, typeof(ScriptableObject));
-                //    continue;
-                //}
-
-                //Debug.LogError("add " + assetPath);
-
-
-
-                AddressableAssetSettings setting = AddressableAssetSettingsDefaultObject.Settings;
-                AddressableAssetGroup group = rootRule.GetCurrentGroup();
-
-                var entry = setting.CreateOrMoveEntry(guid, group);
+                continue;
             }
+
+            if (IsAFolder(assetPath))
+            {
+                //DoSthWhenFolder(assetPath);
+                continue;
+            }
+
+            //if(!IsAssetSameDicWithRule(Path.GetDirectoryName(assetPath), dic))
+            //{
+            //    //var rootRule = (AddressableAssetRule)AssetDatabase.LoadAssetAtPath(guidPath, typeof(ScriptableObject));
+            //    continue;
+            //}
+
+            //Debug.LogError("add " + assetPath);
+            var entry = setting.CreateOrMoveEntry(guid, group);
+            var dir = Path.GetDirectoryName(assetPath);
+            var file = Path.GetFileName(assetPath);
+            entry.address = Path.Combine(dir, file).Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
         }
-
-
-        
     }
 
     private static void DoSthWhenFolder(string assetPath)
@@ -129,7 +130,7 @@ public class AddresaableTempraryTester : MonoBehaviour
         return true;
     }
 
-
+    [MenuItem("Tools/AddressableAssetManager/Clear Group")]
     [MenuItem("Assets/AddressableAssetManager/Test/Clear Group")]
     public static void ClearGroup()
     {
@@ -141,24 +142,14 @@ public class AddresaableTempraryTester : MonoBehaviour
             groups.RemoveAt(builtInDataIndex);
         }
 
-
-        foreach (var group in groups)
+        while(groups.Count > 0)
         {
-            List<AddressableAssetEntry> entries = new List<AddressableAssetEntry>();
-            group.GatherAllAssets(entries, true, true, true);
-            
-            for(int i = 0; i< entries.Count; i++)
-            {
-                var entry = entries[i];
-                group.RemoveAssetEntry(entry, false);
-                Debug.LogError("remove " + entry.address);
-            }
-
-            AddressableAssetSettingsDefaultObject.Settings.SetDirty(AddressableAssetSettings.ModificationEvent.GroupRemoved, group, true);
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
+            setting.RemoveGroup(groups[0]);
+            groups.RemoveAt(0);
         }
 
-       
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+
     }
 }

@@ -1,5 +1,6 @@
 ﻿
 using System.IO;
+using System.Text;
 using UnityEditor;
 using UnityEngine;
 
@@ -30,7 +31,21 @@ namespace AddressableAssetTool
             }
 
             Debug.LogError("selectionpath: " + selectionpath);
-            string newRuleFileName = AssetDatabase.GenerateUniqueAssetPath(Path.Combine(selectionpath, "New Addressable Asset Rule.asset"));
+            string[] directorys = selectionpath.Split("\\");
+
+            StringBuilder stringBuilder = new StringBuilder();
+            for(int i =2;i<directorys.Length;i++)
+            {
+                if (i > 2)
+                {
+                    stringBuilder.Append("_");
+                }
+                stringBuilder.Append(directorys[i]);
+            }
+            stringBuilder.Append(".asset");
+            string assetName = stringBuilder.ToString();
+            string newRuleFileName = AssetDatabase.GenerateUniqueAssetPath(Path.Combine(selectionpath, assetName));
+            Debug.LogError(newRuleFileName);
             newRuleFileName = newRuleFileName.Replace("\\", "/");
             AssetDatabase.CreateAsset(newRule, newRuleFileName);
             AssetDatabase.SaveAssets();
@@ -75,19 +90,19 @@ namespace AddressableAssetTool
 
         private void DrawMeshSettings(AddressableAssetRule t)
         {
-            t._isRuleUsed = EditorGUILayout.Toggle(IsReadable, t._isRuleUsed);
+            //t._isRuleUsed = EditorGUILayout.Toggle(IsReadable, t._isRuleUsed);
             t._packModel = (PackMode)
                 EditorGUILayout.EnumPopup(_AddressablePackMode, t._packModel);
 
             System.Collections.Generic.List<UnityEditor.AddressableAssets.Settings.AddressableAssetGroup> addressableAssetGroups = t.addressableAssetGroups;
-            _groupNameContent = new GUIContent[addressableAssetGroups.Count];
-            for(int i = 0; i < t.addressableAssetGroups.Count; i++)
-            {
-                var guicontent = new GUIContent();
-                guicontent.text = t.addressableAssetGroups[i].name;
-                _groupNameContent[i] = guicontent;
-            }
-            t.groupIndex = EditorGUILayout.Popup(t.groupIndex, _groupNameContent);
+            //_groupNameContent = new GUIContent[addressableAssetGroups.Count];
+            //for(int i = 0; i < t.addressableAssetGroups.Count; i++)
+            //{
+            //    var guicontent = new GUIContent();
+            //    guicontent.text = t.addressableAssetGroups[i].name;
+            //    _groupNameContent[i] = guicontent;
+            //}
+            //t.groupIndex = EditorGUILayout.Popup(t.groupIndex, _groupNameContent);
         }
 
         private void Apply(AddressableAssetRule t)
