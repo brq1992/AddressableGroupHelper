@@ -31,7 +31,9 @@ namespace AddressableAssetTool
             }
 
             Debug.LogError("selectionpath: " + selectionpath);
-            string[] directorys = selectionpath.Split("\\");
+            //var fullPath = Path.GetFullPath(selectionpath);
+            string unifiedPath = selectionpath.Replace("\\", "/");
+            string[] directorys = unifiedPath.Split("/");
 
             StringBuilder stringBuilder = new StringBuilder();
             for(int i =2;i<directorys.Length;i++)
@@ -44,9 +46,11 @@ namespace AddressableAssetTool
             }
             stringBuilder.Append(".asset");
             string assetName = stringBuilder.ToString();
-            string newRuleFileName = AssetDatabase.GenerateUniqueAssetPath(Path.Combine(selectionpath, assetName));
-            Debug.LogError(newRuleFileName);
-            newRuleFileName = newRuleFileName.Replace("\\", "/");
+            string assetPath = Path.Combine(unifiedPath, assetName);
+            Debug.LogError("assetPath "+ assetPath);
+            string newRuleFileName = AssetDatabase.GenerateUniqueAssetPath(assetPath);
+            Debug.LogError("newRuleFileName " +newRuleFileName);
+            //newRuleFileName = newRuleFileName.Replace("\\", "/");
             AssetDatabase.CreateAsset(newRule, newRuleFileName);
             AssetDatabase.SaveAssets();
             AssetDatabase.SetLabels(newRule, label);
