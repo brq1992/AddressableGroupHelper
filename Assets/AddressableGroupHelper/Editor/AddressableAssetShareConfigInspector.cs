@@ -13,6 +13,10 @@ namespace AddressableAssetTool
     public class AddressableAssetShareConfigInspector : Editor
     {
         List<GroupShareData> list = new List<GroupShareData>();
+        private bool _includeIndirect = true;
+        private GroupShareDataAnalyzer analyzer;
+        private Dictionary<string, ShareEntry> data;
+        private bool showRefer;
 
 
         [MenuItem("Assets/AddressableAssetManager/Create/Addressable Asset ShareConfig")]
@@ -54,7 +58,7 @@ namespace AddressableAssetTool
         {
             AddressableAssetShareConfig t = (AddressableAssetShareConfig)target;
 
-            var rules = t.AddressableAssetRules;
+            var rules = t.AssetbundleGroups;
 
             if(rules.Count < 2)
             {
@@ -76,7 +80,7 @@ namespace AddressableAssetTool
                 foreach (var item in group.entries)
                 {
                     var guid = item.guid;
-                    var paths = GetDependPaths(AssetDatabase.GUIDToAssetPath(guid));
+                    var paths = AddressabelUtilities.GetDependPaths(AssetDatabase.GUIDToAssetPath(guid), _includeIndirect);
                     foreach (var path in paths)
                     {
                         //Debug.LogError("add " + path);
@@ -149,40 +153,8 @@ namespace AddressableAssetTool
         }
 
 
-        private bool _includeIndirect = true;
-        private GroupShareDataAnalyzer analyzer;
-        private Dictionary<string, ShareEntry> data;
-        private bool showRefer;
 
-        string[] GetDependPaths(string path)
-        {
-            string[] dependPaths;
-            if (_includeIndirect)
-            {
-                var dependPathList = new List<string>();
-                Object asset = AssetDatabase.LoadAssetAtPath<Object>(path);
-                foreach (Object obj in EditorUtility.CollectDependencies(new Object[] { asset }))
-                {
-                    if (obj != null)
-                    {
-                        string p = AssetDatabase.GetAssetPath(obj);
-                        if (p != path && !dependPathList.Contains(p))
-                        {
-                            dependPathList.Add(p);
-                        }
-                    }
-                }
-                dependPaths = dependPathList.ToArray();
-            }
-            else
-            {
-                dependPaths = AssetDatabase.GetDependencies(path, false);
-            }
 
-            return dependPaths;
-        }
+        
     }
-
-
-   
 }

@@ -60,5 +60,7 @@ namespace AddressableAssetTool
     {
         internal static string ScriptObjAssetLabel = "AddressableAssetRules";
         internal static string RuleSearchPath = "Assets";
+        internal static string RuleAssetExtension = ".AddressableRule";
+
     }
 }

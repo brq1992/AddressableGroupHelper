@@ -7,6 +7,8 @@ namespace AddressableAssetTool
     [System.Serializable]
     public class AddressableAssetShareConfig : ScriptableObject
     {
-        public List<AddressableAssetRule> AddressableAssetRules = new List<AddressableAssetRule>();
+        public List<AddressableAssetRule> AssetbundleGroups = new List<AddressableAssetRule>();
+
+        public List<AddressableAssetRule> CommonAssetbundleGroups = new List<AddressableAssetRule>();
     }
 }
