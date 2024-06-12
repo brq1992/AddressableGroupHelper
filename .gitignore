@@ -6,3 +6,6 @@ obj/
 UserSettings/
 .vsconfig
 .vs/
+Assembly-CSharp.csproj
+Assembly-CSharp-Editor.csproj
+AddressableGroupHelper.sln
