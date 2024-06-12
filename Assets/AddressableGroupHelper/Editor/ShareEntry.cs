@@ -1,6 +1,7 @@
 ﻿
 using System.Collections.Generic;
 using UnityEditor.AddressableAssets.Settings;
+using UnityEditor.Graphs;
 
 namespace AddressableAssetTool
 {
@@ -14,6 +15,7 @@ namespace AddressableAssetTool
         {
             entries = new List<AddressableAssetEntry>() { item };
             groupCount = new Dictionary<string, int>();
+            AddItem(item);
         }
 
         internal void AddItem(AddressableAssetEntry item)
