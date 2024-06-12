@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEditor;
 using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings;
@@ -20,12 +21,26 @@ public class AddresaableTempraryTester : MonoBehaviour
     public static void MoveAssetToProperGroup()
     {
         string ruleFilter = string.Format("t:ScriptableObject l:{0}", AddreaableToolKey.ScriptObjAssetLabel);
-        var ruleGUIDs = AssetDatabase.FindAssets(ruleFilter, 
+        var rulesGUID = AssetDatabase.FindAssets(ruleFilter, 
             new[] { AddreaableToolKey.RuleSearchPath });
 
-        foreach(var item in ruleGUIDs)
+        List<RulePathData> ruleGUIDAfterSort = new List<RulePathData>(); 
+
+        foreach(var item in rulesGUID)
         {
-            DS(item);
+            ruleGUIDAfterSort.Add(new RulePathData(item, AssetDatabase.GUIDToAssetPath(item)));
+        }
+
+
+        ruleGUIDAfterSort.Sort((x, y) =>
+        {
+            return x.Path.Length.CompareTo(y.Path.Length);
+        });
+
+        foreach (var item in ruleGUIDAfterSort)
+        {
+            Debug.LogError(" item " + item.Path);
+            DS(item.GUID);
         }
 
     }
