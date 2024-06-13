@@ -4,39 +4,25 @@ using UnityEditor.AddressableAssets.Settings;
 
 namespace AddressableAssetTool
 {
-    internal class GroupShareDataAnalyzer
+    internal abstract class GroupShareDataAnalyzer
     {
-        private Dictionary<string, ShareEntry> keyValuePairs;
+        protected bool _includeIndirect = false;
 
-        public GroupShareDataAnalyzer()
+        protected AddressableAssetShareConfig t;
+
+        public GroupShareDataAnalyzer(AddressableAssetShareConfig t)
         {
-            keyValuePairs = new Dictionary<string, ShareEntry>();
+            this.t = t;
+            _includeIndirect = t.ShowIndirectReferencies;
         }
 
-        internal void AddAssetPath(string path, AddressableAssetEntry item)
-        {
-            
-            if(!keyValuePairs.ContainsKey(path))
-            {
-                keyValuePairs.Add(path, new ShareEntry(item));
-            }
-            else
-            {
-                keyValuePairs[path].AddItem(item);
-            }
-        }
+        public bool ShowIndirectReferencies { get { return _includeIndirect; }
+            set { _includeIndirect = value; } }
 
-        internal Dictionary<string, ShareEntry> GetColloction()
-        {
-            Dictionary<string, ShareEntry> shareEngryDic = new Dictionary<string, ShareEntry>();
-            foreach(var item in keyValuePairs)
-            {
-                if(item.Value.GetUniqueCount() > 1)
-                {
-                    shareEngryDic.Add(item.Key, item.Value);
-                }
-            }
-            return shareEngryDic;
-        }
+        internal abstract void AddAssetPath(string path, AddressableAssetEntry item);
+
+        internal abstract void ClearData();
+
+        internal abstract Dictionary<string, ShareEntry> GetColloction();
     }
 }

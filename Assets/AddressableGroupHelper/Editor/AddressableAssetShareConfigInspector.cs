@@ -12,12 +12,12 @@ namespace AddressableAssetTool
     [CustomEditor(typeof(AddressableAssetShareConfig))]
     public class AddressableAssetShareConfigInspector : Editor
     {
-        List<GroupShareData> list = new List<GroupShareData>();
         private bool _includeIndirect = true;
         private GroupShareDataAnalyzer analyzer;
         private Dictionary<string, ShareEntry> data;
         private bool showRefer;
-
+        private bool _showIndirectReferencies;
+        private AddressableAssetShareConfig t;
 
         [MenuItem("Assets/AddressableAssetManager/Create/Addressable Asset ShareConfig")]
         public static void CreateShareConfig()
@@ -56,7 +56,7 @@ namespace AddressableAssetTool
 
         private void OnEnable()
         {
-            AddressableAssetShareConfig t = (AddressableAssetShareConfig)target;
+            t = (AddressableAssetShareConfig)target;
 
             var rules = t.AssetbundleGroups;
 
@@ -65,33 +65,8 @@ namespace AddressableAssetTool
                 return;
             }
             AddressableAssetSettings setting = AddressableAssetSettingsDefaultObject.Settings;
-            analyzer = new GroupShareDataAnalyzer();
 
-            foreach (var rule in rules)
-            {
-                //Debug.LogError(rule1.name);
-                var group = setting.FindGroup(rule.name);
-
-                GroupShareData groupShareData = new GroupShareData(group);
-
-                
-
-                //Debug.LogError(group.name);
-                foreach (var item in group.entries)
-                {
-                    var guid = item.guid;
-                    var paths = AddressabelUtilities.GetDependPaths(AssetDatabase.GUIDToAssetPath(guid), _includeIndirect);
-                    foreach (var path in paths)
-                    {
-                        //Debug.LogError("add " + path);
-                        groupShareData.AddAssetPath(path);
-                        analyzer.AddAssetPath(path, item);
-                    }
-                }
-
-               
-                list.Add(groupShareData);
-            }
+            analyzer = GroupShareDataAnalyzerFactory.GetAnalyzer(t);
 
             data = analyzer.GetColloction();
         }
@@ -109,7 +84,18 @@ namespace AddressableAssetTool
             EditorGUILayout.BeginHorizontal();
 
             EditorGUILayout.LabelField("Shared Assets");
-            if (GUILayout.Button((showRefer ? "Hide Refercence" : "Show Refercence")))
+
+            //bool showIndirectReferencies = EditorGUILayout.Toggle("Show Indirect Referencies", t.ShowIndirectReferencies);
+            //if (showIndirectReferencies != t.ShowIndirectReferencies)
+            //{
+            //    t.ShowIndirectReferencies = showIndirectReferencies;
+            //    analyzer.ShowIndirectReferencies = showIndirectReferencies;
+            //    analyzer.ClearData();
+            //    data = analyzer.GetColloction();
+            //}
+
+
+            if (GUILayout.Button(showRefer ? "Hide Refercence" : "Show Refercence"))
             {
                 showRefer = !showRefer;
             }
@@ -118,6 +104,7 @@ namespace AddressableAssetTool
             EditorGUILayout.Space(10f);
             foreach (var item in data)
             {
+                //Debug.LogError(" set " + item.Key);
                 //EditorGUILayout.BeginVertical();
                 //EditorGUILayout.LabelField(item.Key);
                 //EditorGUILayout.LabelField("ReferenceBy: ");
@@ -129,6 +116,7 @@ namespace AddressableAssetTool
 
                 if (!showRefer)
                 {
+                    EditorGUILayout.Space(3f);
                     continue;
                 }
                 var entries = item.Value.Entries();
