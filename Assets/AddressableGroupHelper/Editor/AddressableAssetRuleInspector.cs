@@ -116,7 +116,7 @@ namespace AddressableAssetTool
         }
     }
 
-    enum PackMode
+    public enum PackMode
     {
         PackTogether,
         PackSeparately,
