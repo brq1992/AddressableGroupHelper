@@ -99,6 +99,13 @@ public class AddresaableTempraryTester : MonoBehaviour
         }
     }
 
+    private static bool IsInRootDirectory(string assetPath, string rootDirectory)
+    {
+        string assetDirectory = Path.GetDirectoryName(assetPath);
+
+        return string.Equals(assetDirectory, rootDirectory, System.StringComparison.OrdinalIgnoreCase);
+    }
+
     private static void DoSthWhenFolder(string assetPath)
     {
         //var ruleGUIDs = AssetDatabase.FindAssets(AddreaableToolKey.ScriptObjAssetLabel, new string[] { assetPath });
