@@ -12,7 +12,7 @@ namespace AddressableAssetTool
         {
             AssetMoveResult assetMoveResult = AssetMoveResult.DidNotMove;
             Debug.LogError("Source path: " + sourcePath + ". Destination path: " + destinationPath + ".");
-            if(!sourcePath.EndsWith(AddreaableToolKey.RuleAssetExtension))
+            if(!sourcePath.EndsWith(AddressaableToolKey.RuleAssetExtension))
             {
                 return assetMoveResult;
             }

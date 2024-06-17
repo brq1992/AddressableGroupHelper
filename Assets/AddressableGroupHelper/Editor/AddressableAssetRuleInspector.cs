@@ -13,7 +13,7 @@ namespace AddressableAssetTool
     "assets in this folder will be put into the group with the folder structure preserved. If Pack Separately, assets will be put into the group separately.");
         private GUIContent isReadableContent = new GUIContent("IsUsed Enabled", "Whether this rule will be used!");
         private static bool changed;
-        private static string[] label = new string[] { AddreaableToolKey.ScriptObjAssetLabel };
+        private static string[] label = new string[] { AddressaableToolKey.ScriptObjAssetLabel };
 
         [MenuItem("Assets/AddressableAssetManager/Create/Addressable Asset Rules")]
         public static void CreateAddressableAssetRule()

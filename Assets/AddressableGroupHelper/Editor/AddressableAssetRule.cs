@@ -113,7 +113,7 @@ namespace AddressableAssetTool
         }
     }
 
-    public static class AddreaableToolKey
+    public static class AddressaableToolKey
     {
         internal static string ScriptObjAssetLabel = "AddressableAssetRules";
         internal static string RuleSearchPath = "Assets";

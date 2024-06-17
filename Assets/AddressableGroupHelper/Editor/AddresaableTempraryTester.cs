@@ -20,9 +20,9 @@ public class AddresaableTempraryTester : MonoBehaviour
     [MenuItem("Assets/AddressableAssetManager/Test/Classify Asset to Group")]
     public static void MoveAssetToProperGroup()
     {
-        string ruleFilter = string.Format("t:ScriptableObject l:{0}", AddreaableToolKey.ScriptObjAssetLabel);
+        string ruleFilter = string.Format("t:ScriptableObject l:{0}", AddressaableToolKey.ScriptObjAssetLabel);
         var rulesGUID = AssetDatabase.FindAssets(ruleFilter, 
-            new[] { AddreaableToolKey.RuleSearchPath });
+            new[] { AddressaableToolKey.RuleSearchPath });
 
         List<RulePathData> ruleGUIDAfterSort = new List<RulePathData>(); 
 
