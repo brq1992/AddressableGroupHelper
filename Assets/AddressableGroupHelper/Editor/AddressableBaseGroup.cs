@@ -19,7 +19,7 @@ namespace AddressableAssetTool.Graph
         public List<Node> m_DependenciesForPlacement = new List<Node>();
         private Object obj;
         protected readonly AddressableDependenciesGraph _window;
-        protected const float kNodeWidth = 250.0f;
+        protected readonly float kNodeWidth = AddressaableToolKey.Size.x;
 
         public AddressableBaseGroup(Object obj, AddressableDependenciesGraph addressableDependenciesGraph)
         {

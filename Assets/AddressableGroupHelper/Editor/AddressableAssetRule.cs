@@ -118,6 +118,6 @@ namespace AddressableAssetTool
         internal static string ScriptObjAssetLabel = "AddressableAssetRules";
         internal static string RuleSearchPath = "Assets";
         internal static string RuleAssetExtension = ".AddressableRule";
-
+        internal static Vector2 Size = new Vector2(250, 200);
     }
 }

@@ -13,12 +13,14 @@ namespace AddressableAssetTool.Graph
 {
     public class AddressableDependenciesGraph : EditorWindow
     {
+        public readonly Dictionary<string, Node> m_GUIDNodeLookup = new Dictionary<string, Node>();
+
         private GraphView m_GraphView;
         private readonly List<Object> SelectedObjects = new List<Object>();
         internal readonly List<AddressableBaseGroup> _addressableGroups = new List<AddressableBaseGroup>();
-        public readonly Dictionary<string, Node> m_GUIDNodeLookup = new Dictionary<string, Node>();
         private const float kNodeWidth = 250.0f;
-        Toggle AlignmentToggle;
+        private Toggle AlignmentToggle;
+        private BaseLayout _baseLayout;
 
         [MenuItem("Tools/AddressableAssetManager/Dependency Graph")]
         public static void CreateTestGraphViewWindow()
@@ -49,6 +51,8 @@ namespace AddressableAssetTool.Graph
             toolbar.BringToFront();
             //toolbar2.BringToFront();
 
+
+            _baseLayout = new BaseLayout(_addressableGroups);
         }
 
         private VisualElement CreateToolbar()
@@ -78,13 +82,13 @@ namespace AddressableAssetTool.Graph
                 text = "Clear"
             });
 
-            AlignmentToggle = new Toggle();
-            AlignmentToggle.text = "Horizontal Layout";
-            AlignmentToggle.value = false;
-            AlignmentToggle.RegisterValueChangedCallback(x => {
-                ResetAllNodes();
-            });
-            toolbar.Add(AlignmentToggle);
+            //AlignmentToggle = new Toggle();
+            //AlignmentToggle.text = "Horizontal Layout";
+            //AlignmentToggle.value = false;
+            //AlignmentToggle.RegisterValueChangedCallback(x => {
+            //    ResetAllNodes();
+            //});
+            //toolbar.Add(AlignmentToggle);
 
             return toolbar;
         }
@@ -509,13 +513,18 @@ namespace AddressableAssetTool.Graph
             return edge;
         }
 
-        private void UpdateGroupDependencyNodePlacement(GeometryChangedEvent e, AddressableBaseGroup AddressableGroup)
+        private void UpdateGroupDependencyNodePlacement(GeometryChangedEvent e, AddressableBaseGroup baseGroup)
         {
-            AddressableGroup.mainNode.UnregisterCallback<GeometryChangedEvent, AddressableBaseGroup>(
+            
+            baseGroup.mainNode.UnregisterCallback<GeometryChangedEvent, AddressableBaseGroup>(
                 UpdateGroupDependencyNodePlacement
             );
 
-            ResetNodes(AddressableGroup);
+            ResetNodes(baseGroup);
+
+            Rect pos = _baseLayout.GetNewNodePostion();
+            //baseGroup.groupNode.SetPosition(pos);
+            baseGroup.mainNode.SetPosition(pos);
         }
 
         void ResetNodes(AddressableBaseGroup assetGroup)
@@ -631,7 +640,7 @@ namespace AddressableAssetTool.Graph
             //return new Color(0.24f, 0.24f, 0.24f, 0.8f);
         }
 
-       static StyleColor CustomColor(string assetType)
+        static StyleColor CustomColor(string assetType)
         {
             switch (assetType)
             {
