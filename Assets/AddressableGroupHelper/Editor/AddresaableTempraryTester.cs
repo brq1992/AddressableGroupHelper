@@ -54,6 +54,12 @@ public class AddresaableTempraryTester : MonoBehaviour
         //Debug.LogError("dic " + dic);
 
         var rootRule = (AddressableAssetRule)AssetDatabase.LoadAssetAtPath(guidPath, typeof(ScriptableObject));
+
+        if(!rootRule.IsRuleUsed)
+        {
+            return;
+        }
+
         var name = Path.GetFileNameWithoutExtension(guidPath);
         AddressableAssetSettings setting = AddressableAssetSettingsDefaultObject.Settings;
         var group = setting.FindGroup(name);
@@ -63,7 +69,7 @@ public class AddresaableTempraryTester : MonoBehaviour
         }
         var assetSchema = group.GetSchema<BundledAssetGroupSchema>();
         assetSchema.BundleNaming = BundledAssetGroupSchema.BundleNamingStyle.NoHash;
-        assetSchema.BundleMode = rootRule._packModel == PackMode.PackSeparately ? BundledAssetGroupSchema.BundlePackingMode.PackSeparately : 
+        assetSchema.BundleMode = rootRule.PackModel == PackMode.PackSeparately ? BundledAssetGroupSchema.BundlePackingMode.PackSeparately : 
             BundledAssetGroupSchema.BundlePackingMode.PackTogether;
         assetSchema.UseAssetBundleCrc = false;
         var updateSchema = group.GetSchema<ContentUpdateGroupSchema>();

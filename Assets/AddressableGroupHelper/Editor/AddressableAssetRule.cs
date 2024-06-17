@@ -13,8 +13,8 @@ namespace AddressableAssetTool
 
     public class AddressableAssetRule : ScriptableObject
     {
-        internal PackMode _packModel;
-        internal bool _isRuleUsed;
+        public PackMode PackModel;
+        public bool IsRuleUsed = true;
         internal string _gruopName;
 
         internal List<AddressableAssetGroup> addressableAssetGroups;
@@ -22,8 +22,8 @@ namespace AddressableAssetTool
 
         internal void ApplyDefaults()
         {
-            _isRuleUsed = true;
-            _packModel = PackMode.PackTogether;
+            IsRuleUsed = true;
+            PackModel = PackMode.PackTogether;
 
             var addressableAssetProfileSettings = AddressableAssetSettingsDefaultObject.Settings;
             if (addressableAssetProfileSettings == null)
