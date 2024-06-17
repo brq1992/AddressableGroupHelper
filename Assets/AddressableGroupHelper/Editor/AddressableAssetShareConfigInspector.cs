@@ -60,7 +60,7 @@ namespace AddressableAssetTool
 
             var rules = t.AssetbundleGroups;
 
-            if(rules.Count < 2)
+            if(rules.Count < 1)
             {
                 return;
             }
@@ -81,26 +81,43 @@ namespace AddressableAssetTool
             }
 
 
+
             EditorGUILayout.BeginHorizontal();
 
-            EditorGUILayout.LabelField("Shared Assets");
+            EditorGUILayout.LabelField("Shared Assets", new GUILayoutOption[] { GUILayout.Width(80), GUILayout.MaxWidth(100f) });
 
-            //bool showIndirectReferencies = EditorGUILayout.Toggle("Show Indirect Referencies", t.ShowIndirectReferencies);
-            //if (showIndirectReferencies != t.ShowIndirectReferencies)
-            //{
-            //    t.ShowIndirectReferencies = showIndirectReferencies;
-            //    analyzer.ShowIndirectReferencies = showIndirectReferencies;
-            //    analyzer.ClearData();
-            //    data = analyzer.GetColloction();
-            //}
+            EditorGUILayout.LabelField(" Count "+ data.Count, new GUILayoutOption[] { GUILayout.Width(80), GUILayout.MaxWidth(100f) });
 
+            EditorGUILayout.EndHorizontal();
 
-            if (GUILayout.Button(showRefer ? "Hide Refercence" : "Show Refercence"))
+            EditorGUILayout.BeginHorizontal();
+
+            EditorGUILayout.LabelField(" ShowIndirect", new GUILayoutOption[] { GUILayout.Width(80), GUILayout.MaxWidth(100f) });
+
+            bool showIndirectReferencies = EditorGUILayout.Toggle(t.ShowIndirectReferencies,
+                new GUILayoutOption[] { GUILayout.Width(20), GUILayout.MaxWidth(80) });
+
+            if (showIndirectReferencies != t.ShowIndirectReferencies)
+            {
+                t.ShowIndirectReferencies = showIndirectReferencies;
+                analyzer.ShowIndirectReferencies = showIndirectReferencies;
+                analyzer.ClearData();
+                data = analyzer.GetColloction();
+            }
+
+            if (GUILayout.Button("Refresh", new GUILayoutOption[] { GUILayout.Width(80), GUILayout.MaxWidth(100f) }))
+            {
+                analyzer = GroupShareDataAnalyzerFactory.GetAnalyzer(t);
+
+                data = analyzer.GetColloction();
+            }
+
+            if (GUILayout.Button(showRefer ? "HideRefere" : "ShowRefer", new GUILayoutOption[] { GUILayout.Width(80), GUILayout.MaxWidth(100f) }))
             {
                 showRefer = !showRefer;
             }
-
             EditorGUILayout.EndHorizontal();
+
             EditorGUILayout.Space(10f);
             foreach (var item in data)
             {

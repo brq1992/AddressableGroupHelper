@@ -1,4 +1,6 @@
-﻿using UnityEditor.Experimental.GraphView;
+﻿
+using UnityEditor;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -6,7 +8,9 @@ namespace AddressableAssetTool.Graph
 {
     internal class AddressableGraphView : GraphView
     {
-        public AddressableGraphView()
+        private AddressableDependenciesGraph _window;
+
+        public AddressableGraphView(AddressableDependenciesGraph graphWindow)
         {
             SetupZoom(ContentZoomer.DefaultMinScale, ContentZoomer.DefaultMaxScale);
 
@@ -14,7 +18,6 @@ namespace AddressableAssetTool.Graph
             this.AddManipulator(new SelectionDragger());
             this.AddManipulator(new RectangleSelector());
             this.AddManipulator(new FreehandSelector());
-
             VisualElement background = new VisualElement
             {
                 style =
@@ -25,6 +28,28 @@ namespace AddressableAssetTool.Graph
             Insert(0, background);
 
             background.StretchToParentSize();
+
+            // Register drag-and-drop callbacks
+            RegisterCallback<DragUpdatedEvent>(OnDragUpdated);
+            RegisterCallback<DragPerformEvent>(OnDragPerform);
+
+            _window = graphWindow;
+
+        }
+
+        private void OnDragUpdated(DragUpdatedEvent evt)
+        {
+            DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
+            evt.StopPropagation();
+        }
+
+        private void OnDragPerform(DragPerformEvent evt)
+        {
+            DragAndDrop.AcceptDrag();
+
+            _window.AddElements(DragAndDrop.objectReferences);
+
+            evt.StopPropagation();
         }
     }
 }

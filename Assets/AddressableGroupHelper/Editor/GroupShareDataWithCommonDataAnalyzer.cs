@@ -38,7 +38,7 @@ namespace AddressableAssetTool
         internal override Dictionary<string, ShareEntry> GetColloction()
         {
             AddressableAssetSettings setting = AddressableAssetSettingsDefaultObject.Settings;
-            var rules = t.AssetbundleGroups;
+            
 
             //find common
             var commonBundleGroups = t.CommonAssetbundleGroups;
@@ -69,7 +69,7 @@ namespace AddressableAssetTool
 
 
             var directDependenciesDic = new Dictionary<string, ShareEntry>();
-
+            var rules = t.AssetbundleGroups;
             foreach (var rule in rules)
             {
                 //Debug.LogError(rule1.name);
@@ -112,7 +112,11 @@ namespace AddressableAssetTool
             {
                 if(!commonDicWithDirectDependencies.ContainsKey(item.Key))
                 {
-                    shareEngryDic.Add(item.Key, item.Value);
+                    if (item.Value.GetUniqueCount() > 1)
+                    {
+                        shareEngryDic.Add(item.Key, item.Value);
+                    }
+                    //shareEngryDic.Add(item.Key, item.Value);
                 }
             }
 

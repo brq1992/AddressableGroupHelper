@@ -1,5 +1,6 @@
 ﻿
 
+using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.AddressableAssets;
@@ -40,9 +41,11 @@ namespace AddressableAssetTool
                 //Debug.LogError(group.name);
                 foreach (var item in group.entries)
                 {
+                    GetPrefabBaseParentDependencies(item);
+
                     var guid = item.guid;
                     string guidToPah = AssetDatabase.GUIDToAssetPath(guid);
-                    var paths = AssetDatabase.GetDependencies(guidToPah, _includeIndirect ); //AddressabelUtilities.GetDependPaths(AssetDatabase.GUIDToAssetPath(guid), _includeIndirect);
+                    var paths = AssetDatabase.GetDependencies(guidToPah, _includeIndirect); //AddressabelUtilities.GetDependPaths(AssetDatabase.GUIDToAssetPath(guid), _includeIndirect);
                     foreach (var path in paths)
                     {
                         //UnityEngine.Debug.LogError("add " + path);
@@ -61,6 +64,25 @@ namespace AddressableAssetTool
                 }
             }
             return shareEngryDic;
+        }
+
+        private void GetPrefabBaseParentDependencies(AddressableAssetEntry item)
+        {
+            var prefabType = PrefabUtility.GetPrefabAssetType(item.MainAsset);
+            if (prefabType == PrefabAssetType.Variant)
+            {
+                var basePrefab = PrefabUtility.GetCorrespondingObjectFromSource(item.MainAsset);
+                if (basePrefab != null)
+                {
+                    var basePrefabPath = AssetDatabase.GetAssetPath(basePrefab);
+                    var basePrefabDepenPaths = AssetDatabase.GetDependencies(basePrefabPath, _includeIndirect); //AddressabelUtilities.GetDependPaths(AssetDatabase.GUIDToAssetPath(guid), _includeIndirect);
+                    foreach (var path in basePrefabDepenPaths)
+                    {
+                        AddAssetPath(path, item);
+                    }
+
+                }
+            }
         }
 
         internal override void ClearData()

@@ -54,6 +54,63 @@ namespace AddressableAssetTool
         {
             return AddressableAssetSettingsDefaultObject.Settings.groups[groupIndex];
         }
+
+        internal bool HasConnenct(string dependencyString, out bool isDependence)
+        {
+            bool connnect = false;
+            isDependence = false;
+            var addressableAssetProfileSettings = AddressableAssetSettingsDefaultObject.Settings;
+            var group = addressableAssetProfileSettings.FindGroup(this.name);
+            if(group != null)
+            {
+                foreach(var item in group.entries)
+                {
+                    if(dependencyString.Equals(item.AssetPath))
+                    {
+                        connnect = true;
+                        isDependence = true;
+                        continue;
+                    }
+
+                    //var paths = AssetDatabase.GetDependencies(item.AssetPath, false);
+                    //foreach (var path in paths)
+                    //{
+                    //    if (dependencyString.Equals(path))
+                    //    {
+                    //        connnect = true;
+                    //        isDependence = false;
+                    //        continue;
+                    //    }
+                    //}
+                }
+            }
+
+            return connnect;
+        }
+
+        internal bool IsReliance(string dependencyString)
+        {
+            bool connnect = false;
+            var addressableAssetProfileSettings = AddressableAssetSettingsDefaultObject.Settings;
+            var group = addressableAssetProfileSettings.FindGroup(this.name);
+            if (group != null)
+            {
+                foreach (var item in group.entries)
+                {
+                    var paths = AssetDatabase.GetDependencies(item.AssetPath, false);
+                    foreach (var path in paths)
+                    {
+                        if (dependencyString.Equals(path))
+                        {
+                            connnect = true;
+                            continue;
+                        }
+                    }
+                }
+            }
+
+            return connnect;
+        }
     }
 
     public static class AddreaableToolKey
