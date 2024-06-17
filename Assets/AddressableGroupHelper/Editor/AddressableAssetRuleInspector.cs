@@ -9,6 +9,9 @@ namespace AddressableAssetTool
     [CustomEditor(typeof(AddressableAssetRule))]
     public class AddressableAssetRuleInspector : Editor
     {
+        private GUIContent _addressablePackModeGUIContent = new GUIContent("Pack Mode", "Set how to pack the assets in this group into bundles. If Pack Together, " +
+    "assets in this folder will be put into the group with the folder structure preserved. If Pack Separately, assets will be put into the group separately.");
+        private GUIContent isReadableContent = new GUIContent("IsUsed Enabled", "Whether this rule will be used!");
         private static bool changed;
         private static string[] label = new string[] { AddreaableToolKey.ScriptObjAssetLabel };
 
@@ -81,32 +84,22 @@ namespace AddressableAssetTool
 
             if (changed)
             {
-                if (GUILayout.Button("Apply"))
-                    Apply(t);
+                //if (GUILayout.Button("Apply"))
+                //    Apply(t);
                 EditorUtility.SetDirty(t);
+                //AssetDatabase.SaveAssets();
             }
         }
 
-        public GUIContent _AddressablePackMode = new GUIContent("Pack Mode", "Set how to pack the assets in this group into bundles. If Pack Together, " +
-            "assets in this folder will be put into the group with the folder structure preserved. If Pack Separately, assets will be put into the group separately.");
-        public GUIContent IsReadable = new GUIContent("IsUsed Enabled", "Whether this rule will be used!");
-        public GUIContent[] _groupNameContent;
+
 
         private void DrawMeshSettings(AddressableAssetRule t)
         {
-            //t._isRuleUsed = EditorGUILayout.Toggle(IsReadable, t._isRuleUsed);
-            t._packModel = (PackMode)
-                EditorGUILayout.EnumPopup(_AddressablePackMode, t._packModel);
+            t.IsRuleUsed = EditorGUILayout.Toggle(isReadableContent, t.IsRuleUsed);
+            t.PackModel = (PackMode)
+                EditorGUILayout.EnumPopup(_addressablePackModeGUIContent, t.PackModel);
 
             System.Collections.Generic.List<UnityEditor.AddressableAssets.Settings.AddressableAssetGroup> addressableAssetGroups = t.addressableAssetGroups;
-            //_groupNameContent = new GUIContent[addressableAssetGroups.Count];
-            //for(int i = 0; i < t.addressableAssetGroups.Count; i++)
-            //{
-            //    var guicontent = new GUIContent();
-            //    guicontent.text = t.addressableAssetGroups[i].name;
-            //    _groupNameContent[i] = guicontent;
-            //}
-            //t.groupIndex = EditorGUILayout.Popup(t.groupIndex, _groupNameContent);
         }
 
         private void Apply(AddressableAssetRule t)
@@ -119,7 +112,6 @@ namespace AddressableAssetTool
     public enum PackMode
     {
         PackTogether,
-        PackSeparately,
-        //PackTogetherByLable
+        PackSeparately
     }
 }
