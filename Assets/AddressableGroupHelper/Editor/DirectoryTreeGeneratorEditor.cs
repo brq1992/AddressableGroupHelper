@@ -9,7 +9,7 @@ namespace AddressableAssetTool
 {
     public class DirectoryTreeGeneratorEditor : Editor
     {
-        [MenuItem("Tools/Generate Directory Tree")]
+        [MenuItem("Tools/AddressableAssetManager/Generate Directory Tree")]
         static void GenerateDirectoryTree()
         {
             var selectedObject = Selection.activeObject;
@@ -26,6 +26,8 @@ namespace AddressableAssetTool
                     string outputPath = Path.Combine(Application.dataPath, "DirectoryTree.txt");
                     File.WriteAllLines(outputPath, lines);
                     Debug.Log("Directory tree generated at: " + outputPath);
+
+                    OpenWithNotepadPlusPlus(outputPath);
                 }
                 else
                 {
@@ -82,6 +84,24 @@ namespace AddressableAssetTool
                 {
                     child.GenerateTreeText(lines, indent + "|   ");
                 }
+            }
+        }
+
+        static void OpenWithNotepadPlusPlus(string filePath)
+        {
+            string notepadPlusPlusPath = @"C:\Program Files\Notepad++\notepad++.exe";
+
+            if (File.Exists(notepadPlusPlusPath))
+            {
+                System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo(notepadPlusPlusPath)
+                {
+                    Arguments = filePath
+                };
+                System.Diagnostics.Process.Start(startInfo);
+            }
+            else
+            {
+                UnityEngine.Debug.LogError("Notepad++ not found at: " + notepadPlusPlusPath);
             }
         }
     }
