@@ -39,7 +39,7 @@ public class AddresaableTempraryTester : MonoBehaviour
 
         foreach (var item in ruleGUIDAfterSort)
         {
-            Debug.LogError(" item " + item.Path);
+            //Debug.LogError(" item " + item.Path);
             DS(item.GUID);
         }
 
