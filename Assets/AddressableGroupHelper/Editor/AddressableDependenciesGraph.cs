@@ -524,7 +524,8 @@ namespace AddressableAssetTool.Graph
 
             Rect pos = _baseLayout.GetNewNodePostion();
             //baseGroup.groupNode.SetPosition(pos);
-            baseGroup.mainNode.SetPosition(pos);
+            //baseGroup.mainNode.SetPosition(pos);
+            baseGroup.SetPosition(pos);
         }
 
         void ResetNodes(AddressableBaseGroup assetGroup)

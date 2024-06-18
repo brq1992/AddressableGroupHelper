@@ -344,5 +344,10 @@ namespace AddressableAssetTool.Graph
             dependencyNode = null;
             return false;
         }
+
+        internal virtual void SetPosition(Rect pos)
+        {
+            mainNode.SetPosition(pos);
+        }
     }
 }
