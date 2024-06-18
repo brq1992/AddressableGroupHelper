@@ -319,6 +319,9 @@ namespace AddressableAssetTool.Graph
                 input = dependencyNode.inputContainer[0] as Port,
                 output = parentNode.outputContainer[0] as Port,
             };
+
+            edge.RegisterCallback<MouseUpEvent>(OnMouseUp);
+
             edge.input?.Connect(edge);
             edge.output?.Connect(edge);
 
@@ -329,6 +332,11 @@ namespace AddressableAssetTool.Graph
             edge.capabilities &= ~Capabilities.Deletable;
 
             return edge;
+        }
+
+        private void OnMouseUp(MouseUpEvent evt)
+        {
+            _window.ShowInfoWindow(evt);
         }
 
         internal virtual bool IsDependence(string dependencyString, out bool isDependence, out Node dependencyNode)

@@ -47,14 +47,18 @@ namespace AddressableAssetTool.Graph
 
             rootVisualElement.Add(toolbar);
             //rootVisualElement.Add(toolbar2);
+
+
             rootVisualElement.Add(m_GraphView);
             m_GraphView.StretchToParentSize();
             toolbar.BringToFront();
             //toolbar2.BringToFront();
 
+            _infoWindow = CreateInfoWindow();
 
             _baseLayout = new BaseLayout(_addressableGroups);
         }
+
 
         private VisualElement CreateToolbar()
         {
@@ -668,8 +672,16 @@ namespace AddressableAssetTool.Graph
         internal void ShowInfoWindow(MouseUpEvent evt)
         {
             VisualElement element = evt.currentTarget as VisualElement;
-            Edge Edge = evt.currentTarget as Edge;
-            EdgeUserData data = Edge.userData as EdgeUserData;
+            if (element == null)
+            {
+                return;
+            }
+            Edge edge = evt.currentTarget as Edge;
+            if (edge == null)
+            {
+                return;
+            }
+            EdgeUserData data = edge.userData as EdgeUserData;
             if (data == null)
             {
                 return;
