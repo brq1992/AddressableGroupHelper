@@ -21,6 +21,7 @@ namespace AddressableAssetTool.Graph
         private const float kNodeWidth = 250.0f;
         private Toggle AlignmentToggle;
         private BaseLayout _baseLayout;
+        private VisualElement _infoWindow;
 
         [MenuItem("Tools/AddressableAssetManager/Dependency Graph")]
         public static void CreateTestGraphViewWindow()
@@ -660,6 +661,86 @@ namespace AddressableAssetTool.Graph
             //standard color
             return new Color(0.24f, 0.24f, 0.24f, 0.8f);
         }
+
+
+        #region Edge Info Window
+
+        internal void ShowInfoWindow(MouseUpEvent evt)
+        {
+            VisualElement element = evt.currentTarget as VisualElement;
+            Edge Edge = evt.currentTarget as Edge;
+            EdgeUserData data = Edge.userData as EdgeUserData;
+            if (data == null)
+            {
+                return;
+            }
+
+            //Debug.LogError(data.ParentPath + "  " + data.Dependence);
+            _infoWindow.Q<Label>("info").text = "Dependence: " + data.ParentPath + " -> " + data.Dependence;
+            //_infoWindow.Q<Image>("info-image").image = EditorGUIUtility.IconContent("console.infoicon").image;
+
+
+
+            if (!m_GraphView.Contains(_infoWindow))
+            {
+                m_GraphView.Add(_infoWindow);
+            }
+
+            _infoWindow.style.left = m_GraphView.contentContainer.resolvedStyle.width - _infoWindow.resolvedStyle.width;
+            _infoWindow.style.top = 20;
+
+
+            //Vector2 mousePosition = (evt.currentTarget as VisualElement).ChangeCoordinatesTo(contentViewContainer, evt.localMousePosition);
+            //foreach (var edge in this.Query<Edge>().ToList())
+            //{
+            //    if (edge.worldBound.Contains(mousePosition))
+            //    {
+            //        Debug.LogError("erroe");
+            //        evt.StopPropagation();
+            //        break;
+            //    }
+            //}
+        }
+
+        private VisualElement CreateInfoWindow()
+        {
+            var container = new VisualElement();
+            container.style.width = 250;
+            container.style.height = 150;
+            container.style.backgroundColor = new StyleColor(Color.grey);
+            container.style.position = Position.Absolute;
+            container.style.paddingLeft = 10;
+            container.style.paddingRight = 10;
+            container.style.paddingTop = 10;
+            container.style.paddingBottom = 10;
+
+            var label = new Label("Inspector");
+            label.name = "title";
+            container.Add(label);
+
+            var info = new Label("Dependence");
+            info.name = "info";
+            info.style.whiteSpace = WhiteSpace.Normal; 
+            info.style.overflow = Overflow.Visible; 
+            info.style.flexShrink = 1; 
+            info.style.fontSize = 12;
+
+            container.Add(info);
+
+            return container;
+        }
+
+
+        internal void OnMouseUp(MouseUpEvent evt)
+        {
+            // click not happen on Edge
+            if (m_GraphView.Contains(_infoWindow))
+            {
+                m_GraphView.Remove(_infoWindow);
+            }
+        }
+
+        #endregion
     }
 }
 
