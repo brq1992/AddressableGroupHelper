@@ -730,6 +730,9 @@ namespace AddressableAssetTool.Graph
             return container;
         }
 
+        #endregion
+
+        #region Graph Mouse Event
 
         internal void OnMouseUp(MouseUpEvent evt)
         {

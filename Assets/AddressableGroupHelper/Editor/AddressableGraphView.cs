@@ -32,9 +32,16 @@ namespace AddressableAssetTool.Graph
             // Register drag-and-drop callbacks
             RegisterCallback<DragUpdatedEvent>(OnDragUpdated);
             RegisterCallback<DragPerformEvent>(OnDragPerform);
+            RegisterCallback<MouseUpEvent>(OnMouseUp);
 
             _window = graphWindow;
 
+        }
+
+        private void OnMouseUp(MouseUpEvent evt)
+        {
+            //Debug.LogError(" OnMouseUp");
+            _window.OnMouseUp(evt);
         }
 
         private void OnDragUpdated(DragUpdatedEvent evt)
