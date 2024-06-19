@@ -111,6 +111,10 @@ namespace com.igg.editor
                     //EditorGUILayout.LabelField(item.name);
 
                     bool value = EditorGUILayout.Toggle(item.IsRuleUsed);
+                    if (value != item.IsRuleUsed)
+                    {
+                        EditorUtility.SetDirty(item);
+                    }
                     item.IsRuleUsed = value;
 
                     EditorGUILayout.EndHorizontal();
