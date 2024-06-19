@@ -111,6 +111,69 @@ namespace AddressableAssetTool
 
             return connnect;
         }
+
+        internal bool HasConnenct(string dependencyString, out bool isDependence, out string dependencePath)
+        {
+            bool connnect = false;
+            isDependence = false;
+            dependencePath = null;
+            var addressableAssetProfileSettings = AddressableAssetSettingsDefaultObject.Settings;
+            var group = addressableAssetProfileSettings.FindGroup(this.name);
+            if (group != null)
+            {
+                foreach (var item in group.entries)
+                {
+                    if (dependencyString.Equals(item.AssetPath))
+                    {
+                        connnect = true;
+                        isDependence = true;
+                        dependencePath = item.AssetPath;
+                        continue;
+                    }
+
+                    //var paths = AssetDatabase.GetDependencies(item.AssetPath, false);
+                    //foreach (var path in paths)
+                    //{
+                    //    if (dependencyString.Equals(path))
+                    //    {
+                    //        connnect = true;
+                    //        isDependence = false;
+                    //        continue;
+                    //    }
+                    //}
+                }
+            }
+
+            return connnect;
+        }
+
+        internal bool IsReliance(string assetPath, out string[] dependentPaths)
+        {
+            List<string> list = new List<string>();
+            bool connnect = false;
+            dependentPaths = null;
+            var addressableAssetProfileSettings = AddressableAssetSettingsDefaultObject.Settings;
+            var group = addressableAssetProfileSettings.FindGroup(this.name);
+            if (group != null)
+            {
+                foreach (var item in group.entries)
+                {
+                    var paths = AddressableCache.GetDependencies(item.AssetPath, false);// AssetDatabase.GetDependencies(item.AssetPath, false);
+                    foreach (var path in paths)
+                    {
+                        if (assetPath.Equals(path))
+                        {
+                            connnect = true;
+                            list.Add(item.AssetPath);
+                        }
+                    }
+                }
+
+                dependentPaths = list.ToArray();
+            }
+
+            return connnect;
+        }
     }
 
     public static class AddressaableToolKey

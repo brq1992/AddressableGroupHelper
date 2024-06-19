@@ -59,13 +59,13 @@ namespace AddressableAssetTool.Graph
 
         internal override void DrawGroup(AddressableBaseGroup adGroup, Object obj1, GraphView m_GraphView, EventCallback<GeometryChangedEvent, AddressableBaseGroup> UpdateGroupDependencyNodePlacement, AddressableDependenciesGraph graphWindow)
         {
-            assetPath = AssetDatabase.GetAssetPath(_target);
+            _assetRulePath = AssetDatabase.GetAssetPath(_target);
             
             //assetPath will be empty if obj is null or isn't an asset (a scene object)
-            if (string.IsNullOrEmpty(assetPath))
+            if (string.IsNullOrEmpty(_assetRulePath))
                 return;
 
-            Object mainObject = AssetDatabase.LoadMainAssetAtPath(assetPath);
+            Object mainObject = AssetDatabase.LoadMainAssetAtPath(_assetRulePath);
             groupNode = new Group { title = mainObject.name };
 
             if (mainObject == null)

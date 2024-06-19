@@ -9,7 +9,7 @@ using UnityEngine.UIElements;
 
 namespace AddressableAssetTool.Graph
 {
-    internal class AddressableShowSingleGroup : AddressableBaseGroup
+    internal class AddressableShowSingleGroup : AddressableGraphBaseGroup
     {
         private AddressableAssetRule _target;
 
@@ -18,7 +18,7 @@ namespace AddressableAssetTool.Graph
             _target = obj as AddressableAssetRule;
         }
 
-        internal override string[] GetDependencies()
+        internal string[] GetDependencies()
         {
             List<string> list = new List<string>();
             AddressableAssetSettings setting = AddressableAssetSettingsDefaultObject.Settings;
@@ -58,16 +58,17 @@ namespace AddressableAssetTool.Graph
             return list.ToArray();
         }
 
-        internal override void DrawGroup(AddressableBaseGroup adGroup, Object obj1, GraphView m_GraphView,
-            EventCallback<GeometryChangedEvent, AddressableBaseGroup> UpdateGroupDependencyNodePlacement, AddressableDependenciesGraph graphWindow)
+        internal override void DrawGroup(GraphView m_GraphView, 
+            EventCallback<GeometryChangedEvent, AddressableGraphBaseGroup> UpdateGroupDependencyNodePlacement,
+            AddressableDependenciesGraph graphWindow)
         {
-            assetPath = AssetDatabase.GetAssetPath(_target);
+            _assetRulePath = AssetDatabase.GetAssetPath(_target);
 
             //assetPath will be empty if obj is null or isn't an asset (a scene object)
-            if (string.IsNullOrEmpty(assetPath))
+            if (string.IsNullOrEmpty(_assetRulePath))
                 return;
 
-            Object mainObject = AssetDatabase.LoadMainAssetAtPath(assetPath);
+            Object mainObject = AssetDatabase.LoadMainAssetAtPath(_assetRulePath);
             groupNode = new Group { title = mainObject.name };
 
             if (mainObject == null)
@@ -76,57 +77,137 @@ namespace AddressableAssetTool.Graph
                 return;
             }
 
-            string[] dependencies = GetDependencies();
-
-            //mainNode = CreateNode(adGroup, mainObject, assetPath, true, dependencies.Length, graphWindow.m_GUIDNodeLookup);
-            //mainNode.userData = 0;
-
             Rect position = new Rect(0, 0, 0, 0);
-            //mainNode.SetPosition(position);
 
             if (!m_GraphView.Contains(groupNode))
             {
                 m_GraphView.AddElement(groupNode);
             }
 
-            //m_GraphView.AddElement(mainNode);
-
-            //groupNode.AddElement(mainNode);
-
-            //CreateDependencyNodes(adGroup, dependencies, mainNode, groupNode, 1, m_GraphView, graphWindow.m_GUIDNodeLookup);
-
-            //m_AssetNodes.Add(mainNode);
-
             groupNode.capabilities &= ~Capabilities.Deletable;
 
             groupNode.Focus();
 
-            //mainNode.RegisterCallback<GeometryChangedEvent, AddressableBaseGroup>(
-            //    UpdateGroupDependencyNodePlacement, this
-            //);
+            List<AddressableGraphBaseGroup> graphBaseGroupList = _window._addressableGroups;
 
             var addressableAssetProfileSettings = AddressableAssetSettingsDefaultObject.Settings;
             var group = addressableAssetProfileSettings.FindGroup(_target.name);
+            int count = 0;
             if (group != null)
             {
                 foreach (var item in group.entries)
                 {
-                    var node = CreateNode(adGroup, item.MainAsset, item.AssetPath, true, dependencies.Length, graphWindow.m_GUIDNodeLookup);
+                    string[] dependencies = GetDependencies(item.MainAsset);
+                    var node = CreateNode(item.MainAsset, item.AssetPath, true, dependencies.Length, graphWindow.m_GUIDNodeLookup);
                     node.userData = 0;
+                    position = BaseLayout.GetNewNodePostion(count);
                     node.SetPosition(position);
                     groupNode.AddElement(node);
                     m_GraphView.AddElement(node);
                     m_AssetNodes.Add(node);
-                    node.RegisterCallback<GeometryChangedEvent, AddressableBaseGroup>(
-                    UpdateGroupDependencyNodePlacement, this
-                    );
+                    //groupNode.Add(node);
+                    //node.RegisterCallback<GeometryChangedEvent, AddressableGraphBaseGroup>(
+                    //    UpdateGroupDependencyNodePlacement, this
+                    //);
 
-                    CreateDependencyNodes(null, dependencies, node, groupNode, 1, m_GraphView, graphWindow.m_GUIDNodeLookup);
+                    string entryPath = item.AssetPath;
+                    CreateDependencyNodes(dependencies, node, groupNode, 1, m_GraphView, graphWindow.m_GUIDNodeLookup, entryPath);
+
+
+                    foreach (var graphBaseGroup in graphBaseGroupList)
+                    {
+                        if (this == graphBaseGroup)
+                        {
+                            continue;
+                        }
+
+                        string[] dependencePaths = null;
+                        if (graphBaseGroup.IsReliance(item.AssetPath, out Node[] dependentNodes, out dependencePaths))
+                        {
+                            for (int i = 0; i < dependentNodes.Length; i++)
+                            {
+                                Edge edge = CreateEdge(node, dependentNodes[i], m_GraphView);
+                                edge.userData = new EdgeUserData(dependencePaths[i], item.AssetPath);
+                                edge.userData = new List<EdgeUserData>() { new EdgeUserData(dependencePaths[i], item.AssetPath) };
+                                m_AssetConnections.Add(edge);
+                            }
+                        }
+                    }
+
+
+                    count++;
+                }
+            }
+        }
+
+        internal override void CreateDependencyNodes(string[] dependencies, Node parentNode,
+    Group groupNode, int depth, GraphView m_GraphView, Dictionary<string, Node> m_GUIDNodeLookup, string dependentName)
+        {
+            List<AddressableGraphBaseGroup> list = _window._addressableGroups;
+
+            foreach (string dependencyString in dependencies)
+            {
+                foreach (var group in list)
+                {
+                    if (this == group)
+                    {
+                        continue;
+                    }
+
+                    string dependencePath = null;
+                    if (group.IsDependence(dependencyString, out bool isDependence, out Node dependencyNode, out dependencePath))
+                    {
+                        if (isDependence)
+                        {
+                            Edge edge = CreateEdge(dependencyNode, parentNode, m_GraphView);
+                            edge.userData = new List<EdgeUserData>() { new EdgeUserData(dependentName, dependencePath) };
+                            m_AssetConnections.Add(edge);
+                        }
+                        else
+                        {
+                            Edge edge = CreateEdge(parentNode, dependencyNode, m_GraphView);
+                            //edge.userData = new List<EdgeUserData>() { new EdgeUserData(dependencePath, dependentName) };
+                            edge.userData = new List<EdgeUserData>() { new EdgeUserData("call jeff when you find this", "call jeff") };
+                            Debug.Log(" dependencePath " + dependencePath + " dependentName " + dependentName);
+                            m_AssetConnections.Add(edge);
+                        }
+
+                    }
                 }
             }
 
-           
+            //AddressableAssetRule rule = _assetRuleObj as AddressableAssetRule;
+            //var addressableAssetProfileSettings = AddressableAssetSettingsDefaultObject.Settings;
+            //var _targetGroup = addressableAssetProfileSettings.FindGroup(rule.name);
+
+            //if (_targetGroup != null)
+            //{
+            //    foreach (var item in _targetGroup.entries)
+            //    {
+            //        foreach (var group in list)
+            //        {
+            //            if (this == group)
+            //            {
+            //                continue;
+            //            }
+
+            //            string[] dependencePaths = null;
+            //            if (group.IsReliance(item.AssetPath, out Node[] dependentNodes, out dependencePaths))
+            //            {
+            //                for (int i = 0; i < dependentNodes.Length; i++)
+            //                {
+            //                    Edge edge = CreateEdge(parentNode, dependentNodes[i], m_GraphView);
+            //                    edge.userData = new EdgeUserData(dependencePaths[i], item.AssetPath);
+            //                    edge.userData = new List<EdgeUserData>() { new EdgeUserData(dependencePaths[i], dependentName) };
+            //                    m_AssetConnections.Add(edge);
+            //                }
+            //            }
+            //        }
+            //    }
+            //}
         }
+
+
         internal void CreateDependencyBetweenMainNodes(AddressableBaseGroup AddressableGroup, string[] dependencies, Node parentNode,
           Group groupNode, int depth, GraphView m_GraphView, Dictionary<string, Node> m_GUIDNodeLookup)
         {
@@ -138,7 +219,7 @@ namespace AddressableAssetTool.Graph
                 var typeName = dependencyAsset.GetType().Name;
 
 
-                Node dependencyNode = CreateNode(AddressableGroup, dependencyAsset, AssetDatabase.GetAssetPath(dependencyAsset),
+                Node dependencyNode = CreateNode(dependencyAsset, AssetDatabase.GetAssetPath(dependencyAsset),
                     false, deeperDependencies.Length, m_GUIDNodeLookup);
 
                 if (!AddressableGroup.m_AssetNodes.Contains(dependencyNode))
@@ -164,96 +245,118 @@ namespace AddressableAssetTool.Graph
             }
         }
 
-        internal override void CreateDependencyNodes(AddressableBaseGroup AddressableGroup, string[] dependencies, Node parentNode,
-            Group groupNode, int depth, GraphView m_GraphView, Dictionary<string, Node> m_GUIDNodeLookup)
+        //internal override void CreateDependencyNodes(AddressableBaseGroup AddressableGroup, string[] dependencies, Node parentNode,
+        //    Group groupNode, int depth, GraphView m_GraphView, Dictionary<string, Node> m_GUIDNodeLookup)
+        //{
+        //    List<AddressableGraphBaseGroup> list = _window._addressableGroups;
+
+        //    foreach (string dependencyString in dependencies)
+        //    {
+        //        foreach (var group in list)
+        //        {
+        //            if (this == group)
+        //            {
+        //                continue;
+        //            }
+
+        //            if (group.IsDependence(dependencyString, out bool isDependence, out Node dependencyNode, out _))
+        //            {
+        //                if (isDependence)
+        //                {
+        //                    Edge edge = CreateEdge(dependencyNode, parentNode, m_GraphView);
+
+        //                    AddressableGroup.m_AssetConnections.Add(edge);
+        //                    //AddressableGroup.m_AssetNodes.Add(dependencyNode);
+        //                }
+        //                else
+        //                {
+        //                    Edge edge = CreateEdge(parentNode, dependencyNode, m_GraphView);
+
+        //                    AddressableGroup.m_AssetConnections.Add(edge);
+        //                    //AddressableGroup.m_AssetNodes.Add(dependencyNode);
+        //                }
+        //            }
+        //        }
+        //    }
+
+        //    var addressableAssetProfileSettings = AddressableAssetSettingsDefaultObject.Settings;
+        //    var _targetGroup = addressableAssetProfileSettings.FindGroup(_target.name);
+
+        //    if (_targetGroup != null)
+        //    {
+        //        foreach (var item in _targetGroup.entries)
+        //        {
+        //            foreach (var group in list)
+        //            {
+        //                if (this == group)
+        //                {
+        //                    continue;
+        //                }
+
+        //                if (group.IsReliance(item.AssetPath, out Node dependencyNode))
+        //                {
+        //                    //if (isDependence)
+        //                    //{
+        //                    //    Edge edge = CreateEdge(dependencyNode, parentNode, m_GraphView);
+
+        //                    //    AddressableGroup.m_AssetConnections.Add(edge);
+        //                    //    //AddressableGroup.m_AssetNodes.Add(dependencyNode);
+        //                    //}
+        //                    //else
+        //                    //{
+
+        //                    //}
+
+        //                    Edge edge = CreateEdge(parentNode, dependencyNode, m_GraphView);
+
+        //                    AddressableGroup.m_AssetConnections.Add(edge);
+        //                    //AddressableGroup.m_AssetNodes.Add(dependencyNode);
+        //                }
+        //            }
+        //        }
+        //    }
+        //}
+
+
+
+        internal override void SetPosition(Rect pos)
         {
-            List<AddressableBaseGroup> list = _window._addressableGroups;
-
-            foreach (string dependencyString in dependencies)
+            foreach (var item in groupChildNodes)
             {
-                foreach (var group in list)
-                {
-                    if (this == group)
-                    {
-                        continue;
-                    }
-
-                    if (group.IsDependence(dependencyString, out bool isDependence, out Node dependencyNode))
-                    {
-                        if (isDependence)
-                        {
-                            Edge edge = CreateEdge(dependencyNode, parentNode, m_GraphView);
-
-                            AddressableGroup.m_AssetConnections.Add(edge);
-                            //AddressableGroup.m_AssetNodes.Add(dependencyNode);
-                        }
-                        else
-                        {
-                            Edge edge = CreateEdge(parentNode, dependencyNode, m_GraphView);
-
-                            AddressableGroup.m_AssetConnections.Add(edge);
-                            //AddressableGroup.m_AssetNodes.Add(dependencyNode);
-                        }
-                    }
-                }
-            }
-
-            var addressableAssetProfileSettings = AddressableAssetSettingsDefaultObject.Settings;
-            var _targetGroup = addressableAssetProfileSettings.FindGroup(_target.name);
-
-            if (_targetGroup != null)
-            {
-                foreach (var item in _targetGroup.entries)
-                {
-                    foreach (var group in list)
-                    {
-                        if (this == group)
-                        {
-                            continue;
-                        }
-
-                        if (group.IsReliance(item.AssetPath, out Node dependencyNode))
-                        {
-                            //if (isDependence)
-                            //{
-                            //    Edge edge = CreateEdge(dependencyNode, parentNode, m_GraphView);
-
-                            //    AddressableGroup.m_AssetConnections.Add(edge);
-                            //    //AddressableGroup.m_AssetNodes.Add(dependencyNode);
-                            //}
-                            //else
-                            //{
-
-                            //}
-
-                            Edge edge = CreateEdge(parentNode, dependencyNode, m_GraphView);
-
-                            AddressableGroup.m_AssetConnections.Add(edge);
-                            //AddressableGroup.m_AssetNodes.Add(dependencyNode);
-                        }
-                    }
-                }
+                item.SetPosition(pos);
             }
         }
 
-        internal override bool IsDependence(string dependencyString, out bool isDependence, out Node dependencyNode)
+        internal override bool IsReliance(string assetPath, out Node[] dependentNodes, out string[] dependentPaths)
         {
-            if (_target.HasConnenct(dependencyString, out isDependence))
+            AddressableAssetRule rule = _assetRuleObj as AddressableAssetRule;
+            if (rule != null && rule.IsReliance(assetPath, out dependentPaths))
             {
-                dependencyNode = mainNode;
+                dependentNodes = new Node[dependentPaths.Length];
+                for (int i=0;i<dependentPaths.Length;i++)
+                {
+                    string guid = AssetDatabase.AssetPathToGUID(dependentPaths[i]);
+                    if (_window.m_GUIDNodeLookup.TryGetValue(guid, out Node node))
+                    {
+                        dependentNodes[i] = node;
+                    }
+                    else
+                    {
+                        Debug.LogError("find reliance but don't find node");
+                    }
+                }
+
                 return true;
             }
-            return base.IsDependence(dependencyString, out isDependence, out dependencyNode);
+
+            dependentNodes = null;
+            dependentPaths = null;
+            return false;
         }
 
-        internal override bool IsReliance(string dependencyString, out Node dependencyNode)
+        internal override bool IsReliance(string assetPath, out Node dependencyNode)
         {
-            if (_target.IsReliance(dependencyString))
-            {
-                dependencyNode = mainNode;
-                return true;
-            }
-            return base.IsReliance(assetPath, out dependencyNode);
+            throw new System.NotImplementedException();
         }
     }
 }

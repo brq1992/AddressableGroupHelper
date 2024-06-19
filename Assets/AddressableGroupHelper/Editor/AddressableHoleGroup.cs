@@ -4,9 +4,7 @@ using UnityEditor.AddressableAssets;
 using UnityEditor.Experimental.GraphView;
 using UnityEditor;
 using UnityEngine;
-using static UnityEngine.GraphicsBuffer;
 using UnityEngine.UIElements;
-using Codice.CM.Common;
 
 namespace AddressableAssetTool.Graph
 {
@@ -14,6 +12,7 @@ namespace AddressableAssetTool.Graph
     {
         private AddressableAssetRule _target;
         private List<Node> mainNodes = new List<Node>();
+
         public AddressableHoleGroup(Object obj, AddressableDependenciesGraph addressableDependenciesGraph) : base(obj, addressableDependenciesGraph)
         {
             _target = obj as AddressableAssetRule;
@@ -62,13 +61,13 @@ namespace AddressableAssetTool.Graph
         internal override void DrawGroup(AddressableBaseGroup adGroup, Object obj1, GraphView m_GraphView, 
             EventCallback<GeometryChangedEvent, AddressableBaseGroup> UpdateGroupDependencyNodePlacement, AddressableDependenciesGraph graphWindow)
         {
-            assetPath = AssetDatabase.GetAssetPath(_target);
+            _assetRulePath = AssetDatabase.GetAssetPath(_target);
 
             //assetPath will be empty if obj is null or isn't an asset (a scene object)
-            if (string.IsNullOrEmpty(assetPath))
+            if (string.IsNullOrEmpty(_assetRulePath))
                 return;
 
-            Object mainObject = AssetDatabase.LoadMainAssetAtPath(assetPath);
+            Object mainObject = AssetDatabase.LoadMainAssetAtPath(_assetRulePath);
             groupNode = new Group { title = mainObject.name };
 
             if (mainObject == null)
@@ -79,7 +78,7 @@ namespace AddressableAssetTool.Graph
 
             string[] dependencies = GetDependencies();
 
-            mainNode = CreateNode(adGroup, mainObject, assetPath, true, dependencies.Length, graphWindow.m_GUIDNodeLookup);
+            mainNode = CreateNode(adGroup, mainObject, _assetRulePath, true, dependencies.Length, graphWindow.m_GUIDNodeLookup);
             mainNode.userData = 0;
 
             Rect position = new Rect(0, 0, 0, 0);
@@ -227,7 +226,7 @@ namespace AddressableAssetTool.Graph
         internal override void CreateDependencyNodes(AddressableBaseGroup AddressableGroup, string[] dependencies, Node parentNode,
             Group groupNode, int depth, GraphView m_GraphView, Dictionary<string, Node> m_GUIDNodeLookup)
         {
-            List<AddressableBaseGroup> list = _window._addressableGroups;
+            List<AddressableGraphBaseGroup> list = _window._addressableGroups;
 
             foreach (string dependencyString in dependencies)
             {
@@ -238,11 +237,13 @@ namespace AddressableAssetTool.Graph
                         continue;
                     }
 
-                    if(group.IsDependence(dependencyString, out bool isDependence, out Node dependencyNode))
+                    if(group.IsDependence(dependencyString, out bool isDependence, out Node dependencyNode, out _))
                     {
                         if(isDependence)
                         {
                             Edge edge = CreateEdge(dependencyNode, parentNode, m_GraphView);
+                            edge.userData = new EdgeUserData(AddressableGroup._assetRulePath, dependencyString);
+
 
                             AddressableGroup.m_AssetConnections.Add(edge);
                             //AddressableGroup.m_AssetNodes.Add(dependencyNode);
@@ -250,6 +251,8 @@ namespace AddressableAssetTool.Graph
                         else
                         {
                             Edge edge = CreateEdge(parentNode, dependencyNode, m_GraphView);
+                            edge.userData = new EdgeUserData(dependencyString, AddressableGroup._assetRulePath);
+
 
                             AddressableGroup.m_AssetConnections.Add(edge);
                             //AddressableGroup.m_AssetNodes.Add(dependencyNode);
@@ -287,6 +290,8 @@ namespace AddressableAssetTool.Graph
                             //}
 
                             Edge edge = CreateEdge(parentNode, dependencyNode, m_GraphView);
+                            edge.userData = new EdgeUserData("unknown", item.AssetPath);
+
 
                             AddressableGroup.m_AssetConnections.Add(edge);
                             //AddressableGroup.m_AssetNodes.Add(dependencyNode);
@@ -386,7 +391,7 @@ namespace AddressableAssetTool.Graph
                 dependencyNode = mainNode;
                 return true;
             }
-            return base.IsReliance(assetPath, out dependencyNode);
+            return base.IsReliance(_assetRulePath, out dependencyNode);
         }
     }
 }

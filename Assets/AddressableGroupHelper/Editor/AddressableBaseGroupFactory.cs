@@ -1,14 +1,18 @@
-﻿using System;
+﻿
 
 namespace AddressableAssetTool.Graph
 {
     internal class AddressableBaseGroupFactory
     {
-        internal static AddressableBaseGroup GetGroup(UnityEngine.Object obj, AddressableDependenciesGraph addressableDependenciesGraph)
+        internal static AddressableGraphBaseGroup GetGroup(UnityEngine.Object obj, AddressableDependenciesGraph addressableDependenciesGraph)
         {
-            if(obj is AddressableAssetRule)
+            
+            if (obj is AddressableAssetRule rule)
             {
-                return new AddressableHoleGroup(obj, addressableDependenciesGraph);
+                if (rule.PackModel == PackMode.PackSeparately)
+                    return new AddressableShowSingleGroup(obj, addressableDependenciesGraph);
+                else
+                    return new AddressablePackTogetherGroup(obj, addressableDependenciesGraph);
                 return new AddressableAssetRuleGroup(obj, addressableDependenciesGraph);
             }
             return new AddressableBaseGroup(obj, addressableDependenciesGraph);
