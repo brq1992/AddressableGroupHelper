@@ -7,6 +7,7 @@ using UnityEngine;
 namespace AddressableAssetTool
 {
     [CustomEditor(typeof(AddressableAssetRule))]
+    [CanEditMultipleObjects]
     public class AddressableAssetRuleInspector : Editor
     {
         private GUIContent _addressablePackModeGUIContent = new GUIContent("Pack Mode", "Set how to pack the assets in this group into bundles. If Pack Together, " +
