@@ -119,5 +119,7 @@ namespace AddressableAssetTool
         internal static string RuleSearchPath = "Assets";
         internal static string RuleAssetExtension = ".AddressableRule";
         internal static Vector2 Size = new Vector2(250, 200);
+        internal static float NodeRadius = 150;
+        internal static float GroupRadius = 440f;
     }
 }
