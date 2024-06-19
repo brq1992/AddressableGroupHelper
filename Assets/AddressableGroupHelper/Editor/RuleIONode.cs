@@ -104,8 +104,11 @@ namespace com.igg.editor
                 {
                     EditorGUILayout.BeginHorizontal();
 
-
-                    EditorGUILayout.LabelField(item.name);
+                    if (GUILayout.Button(item.name, EditorStyles.label, GUILayout.MinWidth(750)))
+                    {
+                        EditorGUIUtility.PingObject(item);
+                    }
+                    //EditorGUILayout.LabelField(item.name);
 
                     bool value = EditorGUILayout.Toggle(item.IsRuleUsed);
                     item.IsRuleUsed = value;
