@@ -97,7 +97,7 @@ namespace AddressableAssetTool
             {
                 foreach (var item in group.entries)
                 {
-                    var paths = AssetDatabase.GetDependencies(item.AssetPath, false);
+                    var paths = AddressableCache.GetDependencies(item.AssetPath, false);// AssetDatabase.GetDependencies(item.AssetPath, false);
                     foreach (var path in paths)
                     {
                         if (dependencyString.Equals(path))

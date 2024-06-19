@@ -84,7 +84,7 @@ namespace AddressableAssetTool
 
         static void GetDependenciesAndAddNoes(string assetPath, Node<Object> rootNode)
         {
-            var directDependencies = AssetDatabase.GetDependencies(assetPath, false);
+            var directDependencies = AddressableCache.GetDependencies(assetPath, false);
             foreach (var path in directDependencies)
             {
                 //Debug.LogError("child path " + path);

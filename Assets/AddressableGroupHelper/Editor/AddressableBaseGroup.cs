@@ -29,7 +29,7 @@ namespace AddressableAssetTool.Graph
 
         internal virtual string[] GetDependencies()
         {
-            return AssetDatabase.GetDependencies(assetPath, false);
+            return AddressableCache.GetDependencies(assetPath, false);
         }
 
 
@@ -242,7 +242,7 @@ namespace AddressableAssetTool.Graph
             foreach (string dependencyString in dependencies)
             {
                 Object dependencyAsset = AssetDatabase.LoadMainAssetAtPath(dependencyString);
-                string[] deeperDependencies = AssetDatabase.GetDependencies(dependencyString, false);
+                string[] deeperDependencies = AddressableCache.GetDependencies(dependencyString, false);
 
                 var typeName = dependencyAsset.GetType().Name;
 

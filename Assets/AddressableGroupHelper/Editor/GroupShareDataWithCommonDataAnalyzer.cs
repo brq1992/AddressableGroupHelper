@@ -80,7 +80,7 @@ namespace AddressableAssetTool
                     var guid = item.guid;
                     string guidToPah = AssetDatabase.GUIDToAssetPath(guid);
 
-                    var directPaths = AssetDatabase.GetDependencies(guidToPah, false); //AddressabelUtilities.GetDependPaths(AssetDatabase.GUIDToAssetPath(guid), _includeIndirect);
+                    var directPaths = AddressableCache.GetDependencies(guidToPah, false); //AddressabelUtilities.GetDependPaths(AssetDatabase.GUIDToAssetPath(guid), _includeIndirect);
                     foreach (var path in directPaths)
                     {
                         if (commonDicWithDirectDependencies.ContainsKey(path))
@@ -134,7 +134,7 @@ namespace AddressableAssetTool
 
         private void RecurseDenpendencies(Dictionary<string, ShareEntry> directDependenciesDic, AddressableAssetEntry item, string path)
         {
-            var inDirectPaths = AssetDatabase.GetDependencies(path, false);
+            var inDirectPaths = AddressableCache.GetDependencies(path, false);
             foreach (var indirectPath in inDirectPaths)
             {
                 if (directDependenciesDic.ContainsKey(indirectPath) || commonDicWithDirectDependencies.ContainsKey(indirectPath))

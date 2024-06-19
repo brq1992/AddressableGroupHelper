@@ -40,7 +40,7 @@ namespace AddressableAssetTool
             {
                 return deps;
             }
-            deps = AssetDatabase.GetDependencies(assetPath, false);
+            deps = AssetDatabase.GetDependencies(assetPath, true);
             recursiveDic.Add(assetPath, deps);
             return deps;
         }

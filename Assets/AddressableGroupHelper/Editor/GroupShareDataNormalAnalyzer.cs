@@ -45,7 +45,7 @@ namespace AddressableAssetTool
 
                     var guid = item.guid;
                     string guidToPah = AssetDatabase.GUIDToAssetPath(guid);
-                    var paths = AssetDatabase.GetDependencies(guidToPah, _includeIndirect); //AddressabelUtilities.GetDependPaths(AssetDatabase.GUIDToAssetPath(guid), _includeIndirect);
+                    var paths = AddressableCache.GetDependencies(guidToPah, _includeIndirect); //AddressabelUtilities.GetDependPaths(AssetDatabase.GUIDToAssetPath(guid), _includeIndirect);
                     foreach (var path in paths)
                     {
                         //UnityEngine.Debug.LogError("add " + path);
@@ -75,7 +75,7 @@ namespace AddressableAssetTool
                 if (basePrefab != null)
                 {
                     var basePrefabPath = AssetDatabase.GetAssetPath(basePrefab);
-                    var basePrefabDepenPaths = AssetDatabase.GetDependencies(basePrefabPath, _includeIndirect); //AddressabelUtilities.GetDependPaths(AssetDatabase.GUIDToAssetPath(guid), _includeIndirect);
+                    var basePrefabDepenPaths = AddressableCache.GetDependencies(basePrefabPath, _includeIndirect); //AddressabelUtilities.GetDependPaths(AssetDatabase.GUIDToAssetPath(guid), _includeIndirect);
                     foreach (var path in basePrefabDepenPaths)
                     {
                         AddAssetPath(path, item);

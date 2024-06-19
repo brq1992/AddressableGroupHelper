@@ -35,7 +35,7 @@ namespace AddressableAssetTool
             }
             else
             {
-                dependPaths = AssetDatabase.GetDependencies(path, false);
+                dependPaths = AddressableCache.GetDependencies(path, false);
             }
 
             return dependPaths;

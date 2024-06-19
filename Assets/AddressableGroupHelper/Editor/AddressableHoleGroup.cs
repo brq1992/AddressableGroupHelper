@@ -33,7 +33,7 @@ namespace AddressableAssetTool.Graph
                     if (basePrefab != null)
                     {
                         var basePrefabPath = AssetDatabase.GetAssetPath(basePrefab);
-                        var basePrefabDepenPaths = AssetDatabase.GetDependencies(basePrefabPath, false); //AddressabelUtilities.GetDependPaths(AssetDatabase.GUIDToAssetPath(guid), _includeIndirect);
+                        var basePrefabDepenPaths = AddressableCache.GetDependencies(basePrefabPath, false); //AddressabelUtilities.GetDependPaths(AssetDatabase.GUIDToAssetPath(guid), _includeIndirect);
                         foreach (var path in basePrefabDepenPaths)
                         {
                             if (!list.Contains(path))
@@ -46,7 +46,7 @@ namespace AddressableAssetTool.Graph
 
                 var guid = item.guid;
                 string guidToPah = AssetDatabase.GUIDToAssetPath(guid);
-                var paths = AssetDatabase.GetDependencies(guidToPah, false); //AddressabelUtilities.GetDependPaths(AssetDatabase.GUIDToAssetPath(guid), _includeIndirect);
+                var paths = AddressableCache.GetDependencies(guidToPah, false); //AddressabelUtilities.GetDependPaths(AssetDatabase.GUIDToAssetPath(guid), _includeIndirect);
                 foreach (var path in paths)
                 {
                     if (!list.Contains(path))
@@ -154,7 +154,7 @@ namespace AddressableAssetTool.Graph
             foreach (string dependencyString in dependencies)
             {
                 Object dependencyAsset = AssetDatabase.LoadMainAssetAtPath(dependencyString);
-                string[] deeperDependencies = AssetDatabase.GetDependencies(dependencyString, false);
+                string[] deeperDependencies = AddressableCache.GetDependencies(dependencyString, false);
 
                 var typeName = dependencyAsset.GetType().Name;
 
