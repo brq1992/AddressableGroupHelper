@@ -736,10 +736,21 @@ namespace AddressableAssetTool.Graph
             info.style.overflow = Overflow.Visible; 
             info.style.flexShrink = 1; 
             info.style.fontSize = 12;
-
             container.Add(info);
 
+            var showDependencyBtn = new Button();
+            showDependencyBtn.text = "Show Reliance";
+            showDependencyBtn.name = "ShowReliance";
+            showDependencyBtn.clicked += OnClickShowReliance;
+            container.Add(showDependencyBtn);
+
+
             return container;
+        }
+
+        private void OnClickShowReliance()
+        {
+            Debug.LogError("show click!");
         }
 
         #endregion
