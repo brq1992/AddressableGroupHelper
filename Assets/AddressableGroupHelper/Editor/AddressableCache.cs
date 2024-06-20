@@ -130,7 +130,7 @@ namespace AddressableAssetTool
             return deps;
         }
 
-        private static void CacheClear()
+        internal static void CacheClear()
         {
             recursiveDic.Clear();
             noRecursiveDic.Clear();
