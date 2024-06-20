@@ -5,7 +5,6 @@ using UnityEditor.AddressableAssets;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UIElements;
-using NUnit.Framework;
 
 namespace AddressableAssetTool.Graph
 {
