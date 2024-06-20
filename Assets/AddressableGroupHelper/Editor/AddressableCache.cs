@@ -49,11 +49,30 @@ namespace AddressableAssetTool
                             list.Add(basePrefabDepenPath);
                         }
                     }
+
+                    //Variant prefab need to remove its base prefab, since assetbundle will not contain it.
+                    var assetVariantDependencyPaths = AssetDatabase.GetDependencies(assetPath, false);
+                    for (int i = 0; i < assetVariantDependencyPaths.Length; i++)
+                    {
+                        if (assetVariantDependencyPaths[i].Equals(basePrefabPath))
+                        {
+                            continue;
+                        }
+
+                        if (!list.Contains(assetVariantDependencyPaths[i]))
+                        {
+                            list.Add(assetVariantDependencyPaths[i]);
+                        }
+                    }
+
+                    deps = list.ToArray();
+                    noRecursiveDic.Add(assetPath, deps);
+                    return deps;
                 }
             }
 
             var assetDependencyPaths = AssetDatabase.GetDependencies(assetPath, false);
-            for(int i = 0; i < assetDependencyPaths.Length; i++)
+            for (int i = 0; i < assetDependencyPaths.Length; i++)
             {
                 if (!list.Contains(assetDependencyPaths[i]))
                 {
