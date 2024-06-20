@@ -10,19 +10,11 @@ using Object = UnityEngine.Object;
 
 namespace AddressableAssetTool.Graph
 {
-    internal class AddressableBaseGroup : AddressableGraphBaseGroup
+    internal class AddressableAssetGroup : GraphBaseGroup
     {
-        internal Group groupNode;
         public Node mainNode = new Node();
 
-        
-        
-        
-        private Object obj;
-        protected readonly AddressableDependenciesGraph _window;
-
-
-        public AddressableBaseGroup(Object obj, AddressableDependenciesGraph addressableDependenciesGraph) : base(obj, addressableDependenciesGraph)
+        public AddressableAssetGroup(Object obj, AddressableDependenciesGraph addressableDependenciesGraph) : base(obj, addressableDependenciesGraph)
         {
             this.obj = obj;
             _window = addressableDependenciesGraph;
@@ -30,65 +22,52 @@ namespace AddressableAssetTool.Graph
 
         internal virtual string[] GetDependencies()
         {
-            return AddressableCache.GetDependencies(_assetRulePath, false);
+            throw new NotImplementedException();
         }
 
 
-        internal virtual void DrawGroup(AddressableBaseGroup adGroup, Object obj, GraphView m_GraphView,
-             EventCallback<GeometryChangedEvent, AddressableBaseGroup> UpdateGroupDependencyNodePlacement, AddressableDependenciesGraph graphWindow)
+        internal override void DrawGroup(GraphView m_GraphView,
+             EventCallback<GeometryChangedEvent, GraphBaseGroup> UpdateGroupDependencyNodePlacement, AddressableDependenciesGraph graphWindow)
         {
-            adGroup._assetRulePath = AssetDatabase.GetAssetPath(obj);
+            _assetRulePath = AssetDatabase.GetAssetPath(obj);
 
-            //assetPath will be empty if obj is null or isn't an asset (a scene object)
-            if (obj == null || string.IsNullOrEmpty(adGroup._assetRulePath))
-                return;
+            groupNode = new Group { title = obj.name };
 
-            adGroup.groupNode = new Group { title = obj.name };
+            string[] dependencies = AddressableCache.GetDependencies(_assetRulePath, false);
 
-
-            Object mainObject = AssetDatabase.LoadMainAssetAtPath(adGroup._assetRulePath);
-
-            if (mainObject == null)
-            {
-                Debug.Log("Object doesn't exist anymore");
-                return;
-            }
-
-            string[] dependencies = adGroup.GetDependencies(); // AssetDatabase.GetDependencies(adGroup.assetPath, false);
-
-            adGroup.mainNode = CreateNode(adGroup, mainObject, adGroup._assetRulePath, true, dependencies.Length, graphWindow.m_GUIDNodeLookup);
-            adGroup.mainNode.userData = 0;
+            mainNode = CreateNode(this, obj, _assetRulePath, true, dependencies.Length, graphWindow.m_GUIDNodeLookup);
+            mainNode.userData = 0;
 
             Rect position = new Rect(0, 0, 0, 0);
-            adGroup.mainNode.SetPosition(position);
+            mainNode.SetPosition(position);
 
-            if (!m_GraphView.Contains(adGroup.groupNode))
+            if (!m_GraphView.Contains(groupNode))
             {
-                m_GraphView.AddElement(adGroup.groupNode);
+                m_GraphView.AddElement(groupNode);
             }
 
-            m_GraphView.AddElement(adGroup.mainNode);
+            m_GraphView.AddElement(mainNode);
 
-            adGroup.groupNode.AddElement(adGroup.mainNode);
+            groupNode.AddElement(mainNode);
 
-            CreateDependencyNodes(adGroup, dependencies, adGroup.mainNode, adGroup.groupNode, 1, m_GraphView, graphWindow.m_GUIDNodeLookup);
+            CreateDependencyNodes(this, dependencies, mainNode, groupNode, 1, m_GraphView, graphWindow.m_GUIDNodeLookup);
 
-            adGroup.m_AssetNodes.Add(adGroup.mainNode);
+            m_AssetNodes.Add(mainNode);
 
-            adGroup.groupNode.capabilities &= ~Capabilities.Deletable;
+            groupNode.capabilities &= ~Capabilities.Deletable;
 
-            adGroup.groupNode.Focus();
+            groupNode.Focus();
 
-            adGroup.mainNode.RegisterCallback<GeometryChangedEvent, AddressableBaseGroup>(
-                UpdateGroupDependencyNodePlacement, adGroup
+            mainNode.RegisterCallback<GeometryChangedEvent, AddressableAssetGroup>(
+                UpdateGroupDependencyNodePlacement, this
             );
         }
 
-        internal virtual Node CreateNode(AddressableBaseGroup AddressableGroup, Object obj, string assetPath, bool isMainNode,
+        internal virtual Node CreateNode(AddressableAssetGroup AddressableGroup, Object obj, string assetPath, bool isMainNode,
             int dependencyAmount, Dictionary<string, Node> m_GUIDNodeLookup)
         {
             Node resultNode;
-            string assetGUID = AssetDatabase.AssetPathToGUID(assetPath);
+            string assetGUID = AssetDatabase.AssetPathToGUID(assetPath) + "_copy";
             if (m_GUIDNodeLookup.TryGetValue(assetGUID, out resultNode))
             {
                 return resultNode;
@@ -235,7 +214,7 @@ namespace AddressableAssetTool.Graph
             return resultNode;
         }
 
-        internal virtual void CreateDependencyNodes(AddressableBaseGroup AddressableGroup, string[] dependencies, Node parentNode, Group groupNode, int depth,
+        internal virtual void CreateDependencyNodes(AddressableAssetGroup AddressableGroup, string[] dependencies, Node parentNode, Group groupNode, int depth,
             GraphView m_GraphView, Dictionary<string, Node> m_GUIDNodeLookup)
         {
             //Debug.Log(depth);
@@ -343,7 +322,12 @@ namespace AddressableAssetTool.Graph
 
         internal virtual bool IsDependence(string dependencyString, out bool isDependence, out Node dependencyNode)
         {
-
+            if (dependencyString.Equals(_assetRulePath))
+            {
+                dependencyNode = mainNode;
+                isDependence = true;
+                return true;
+            }
             isDependence = false;
             dependencyNode = null;
             return false;
@@ -351,30 +335,46 @@ namespace AddressableAssetTool.Graph
 
         internal override bool IsReliance(string dependencyString, out Node dependencyNode)
         {
+            if (dependencyString.Equals(_assetRulePath))
+            {
+                dependencyNode = mainNode;
+                return true;
+            }
             dependencyNode = null;
             return false;
         }
 
-        internal override void DrawGroup(GraphView m_GraphView, EventCallback<GeometryChangedEvent, AddressableGraphBaseGroup> UpdateGroupDependencyNodePlacement, AddressableDependenciesGraph graphWindow)
-        {
-            throw new NotImplementedException();
-        }
 
         internal override void SetPosition(Rect pos)
         {
             mainNode.SetPosition(pos);
         }
 
-        internal override void UnregisterCallback(EventCallback<GeometryChangedEvent, AddressableGraphBaseGroup> updateGroupDependencyNodePlacement)
+        internal override void UnregisterCallback(EventCallback<GeometryChangedEvent, GraphBaseGroup> updateGroupDependencyNodePlacement)
         {
-            throw new NotImplementedException();
+            mainNode.UnregisterCallback<GeometryChangedEvent, AddressableGraphBaseGroup>(
+                    updateGroupDependencyNodePlacement
+                );
         }
 
         internal override bool IsReliance(string assetPath, out Node[] dependencyNode, out string[] dependencePath)
         {
-            throw new NotImplementedException();
+            if (assetPath.Equals(_assetRulePath))
+            {
+                dependencyNode = new[] { mainNode };
+                dependencePath = new[] { _assetRulePath };
+                return true;
+            }
+
+            dependencyNode = null;
+            dependencePath = null;
+            return false;
         }
 
+        internal override Rect GetMainNodePositoin()
+        {
+            return mainNode.GetPosition();
+        }
     }
 
     
