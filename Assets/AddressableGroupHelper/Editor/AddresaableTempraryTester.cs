@@ -13,7 +13,7 @@ using UnityEngine;
 public class AddresaableTempraryTester : MonoBehaviour
 {
     static string assetFilter = "t:Object";
-    private static List<string> _ignoreTypeList = new List<string> { ".tpsheet", ".cginc", ".cs", ".dll", ".asset" };
+    private static List<string> _ignoreTypeList = new List<string> { ".tpsheet", ".cginc", ".cs", ".dll"};
 
 
     [MenuItem("Tools/AddressableAssetManager/Classify Asset to Group")]
@@ -40,12 +40,12 @@ public class AddresaableTempraryTester : MonoBehaviour
         foreach (var item in ruleGUIDAfterSort)
         {
             //Debug.LogError(" item " + item.Path);
-            DS(item.GUID);
+            CreatOrMoveEntryIntoGroup(item.GUID);
         }
 
     }
 
-    private static void DS(string ruleGUID)
+    private static void CreatOrMoveEntryIntoGroup(string ruleGUID)
     {
         var guidPath = AssetDatabase.GUIDToAssetPath(ruleGUID);
         //Debug.LogError("file path " + guidPath);
@@ -65,7 +65,8 @@ public class AddresaableTempraryTester : MonoBehaviour
         var group = setting.FindGroup(name);
         if (group == null)
         {
-            group = setting.CreateGroup(name, false, false, false, new List<AddressableAssetGroupSchema>() { new BundledAssetGroupSchema(), new ContentUpdateGroupSchema() });
+            group = setting.CreateGroup(name, false, false, false, new List<AddressableAssetGroupSchema>() { new BundledAssetGroupSchema(), 
+                new ContentUpdateGroupSchema() });
         }
         var assetSchema = group.GetSchema<BundledAssetGroupSchema>();
         assetSchema.BundleNaming = BundledAssetGroupSchema.BundleNamingStyle.NoHash;
@@ -88,6 +89,12 @@ public class AddresaableTempraryTester : MonoBehaviour
             if (IsAFolder(assetPath))
             {
                 //DoSthWhenFolder(assetPath);
+                continue;
+            }
+
+            var addressableAssetRule = AssetDatabase.LoadAssetAtPath<AddressableAssetRule>(assetPath);
+            if(addressableAssetRule != null)
+            {
                 continue;
             }
 
