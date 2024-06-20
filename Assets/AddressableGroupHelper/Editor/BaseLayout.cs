@@ -7,7 +7,7 @@ namespace AddressableAssetTool.Graph
 {
     internal class BaseLayout
     {
-        static internal Rect GetNewNodePostion(List<AddressableGraphBaseGroup> addressableGroups)
+        static internal Rect GetNewNodePostion(List<GraphBaseGroup> addressableGroups)
         {
             //count -1 is to get last node count
             int n = addressableGroups.Count - 1;

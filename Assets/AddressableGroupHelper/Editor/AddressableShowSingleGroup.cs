@@ -59,7 +59,7 @@ namespace AddressableAssetTool.Graph
         }
 
         internal override void DrawGroup(GraphView m_GraphView, 
-            EventCallback<GeometryChangedEvent, AddressableGraphBaseGroup> UpdateGroupDependencyNodePlacement,
+            EventCallback<GeometryChangedEvent, GraphBaseGroup> UpdateGroupDependencyNodePlacement,
             AddressableDependenciesGraph graphWindow)
         {
             _assetRulePath = AssetDatabase.GetAssetPath(_target);
@@ -88,7 +88,7 @@ namespace AddressableAssetTool.Graph
 
             groupNode.Focus();
 
-            List<AddressableGraphBaseGroup> graphBaseGroupList = _window._addressableGroups;
+            List<GraphBaseGroup> graphBaseGroupList = _window._addressableGroups;
 
             var addressableAssetProfileSettings = AddressableAssetSettingsDefaultObject.Settings;
             var group = addressableAssetProfileSettings.FindGroup(_target.name);
@@ -143,7 +143,7 @@ namespace AddressableAssetTool.Graph
         internal override void CreateDependencyNodes(string[] dependencies, Node parentNode,
     Group groupNode, int depth, GraphView m_GraphView, Dictionary<string, Node> m_GUIDNodeLookup, string dependentName)
         {
-            List<AddressableGraphBaseGroup> list = _window._addressableGroups;
+            List<GraphBaseGroup> list = _window._addressableGroups;
 
             foreach (string dependencyString in dependencies)
             {
@@ -208,7 +208,7 @@ namespace AddressableAssetTool.Graph
         }
 
 
-        internal void CreateDependencyBetweenMainNodes(AddressableBaseGroup AddressableGroup, string[] dependencies, Node parentNode,
+        internal void CreateDependencyBetweenMainNodes(AddressableAssetGroup AddressableGroup, string[] dependencies, Node parentNode,
           Group groupNode, int depth, GraphView m_GraphView, Dictionary<string, Node> m_GUIDNodeLookup)
         {
             foreach (string dependencyString in dependencies)
@@ -358,5 +358,6 @@ namespace AddressableAssetTool.Graph
         {
             throw new System.NotImplementedException();
         }
+
     }
 }

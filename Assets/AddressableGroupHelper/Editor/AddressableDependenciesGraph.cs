@@ -16,7 +16,7 @@ namespace AddressableAssetTool.Graph
 
         private GraphView m_GraphView;
         private readonly List<Object> SelectedObjects = new List<Object>();
-        internal readonly List<AddressableGraphBaseGroup> _addressableGroups = new List<AddressableGraphBaseGroup>();
+        internal readonly List<GraphBaseGroup> _addressableGroups = new List<GraphBaseGroup>();
         private readonly List<Group> _groups = new List<Group>();
 
         private const float kNodeWidth = 250.0f;
@@ -87,12 +87,13 @@ namespace AddressableAssetTool.Graph
                 text = "Clear"
             });
 
-            //AlignmentToggle = new Toggle();
-            //AlignmentToggle.text = "Horizontal Layout";
-            //AlignmentToggle.value = false;
-            //AlignmentToggle.RegisterValueChangedCallback(x => {
-            //    ResetAllNodes();
-            //});
+            AlignmentToggle = new Toggle();
+            AlignmentToggle.text = "Horizontal Layout";
+            AlignmentToggle.value = false;
+            AlignmentToggle.RegisterValueChangedCallback(x =>
+            {
+                ResetAllNodes();
+            });
             //toolbar.Add(AlignmentToggle);
 
             return toolbar;
@@ -114,7 +115,7 @@ namespace AddressableAssetTool.Graph
             _groups.Clear();
         }
 
-        void EmptyGroup(AddressableGraphBaseGroup assetGroup)
+        void EmptyGroup(GraphBaseGroup assetGroup)
         {
             if (assetGroup.m_AssetConnections.Count > 0)
             {
@@ -527,7 +528,7 @@ namespace AddressableAssetTool.Graph
             return edge;
         }
 
-        private void UpdateGroupDependencyNodePlacement(GeometryChangedEvent e, AddressableGraphBaseGroup baseGroup)
+        private void UpdateGroupDependencyNodePlacement(GeometryChangedEvent e, GraphBaseGroup baseGroup)
         {
 
             //((AddressableBaseGroup)baseGroup).mainNode.UnregisterCallback<GeometryChangedEvent, AddressableGraphBaseGroup>(
@@ -545,7 +546,7 @@ namespace AddressableAssetTool.Graph
             baseGroup.SetPosition(pos);
         }
 
-        void ResetNodes(AddressableGraphBaseGroup assetGroup)
+        void ResetNodes(GraphBaseGroup assetGroup)
         {
             // The current y offset in per depth
             var depthOffset = new Dictionary<int, float>();
@@ -711,6 +712,10 @@ namespace AddressableAssetTool.Graph
             //Debug.LogError(data.ParentPath + "  " + data.Dependence);
             _infoWindow.Q<Label>("info").text = stringBuilder.ToString();
             //_infoWindow.Q<Image>("info-image").image = EditorGUIUtility.IconContent("console.infoicon").image;
+
+            //_infoWindow.Q<Label>("info").text = "Dependence: " + data.ParentPath + " -> " + data.Dependence;
+
+            _infoWindow.Q<Button>("ShowReliance").userData = data;
 
 
 

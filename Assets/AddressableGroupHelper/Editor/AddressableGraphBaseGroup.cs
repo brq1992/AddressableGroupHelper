@@ -5,45 +5,44 @@ using UnityEngine.UIElements;
 using UnityEngine;
 using Object = UnityEngine.Object;
 using UnityEditor;
-using static UnityEngine.GraphicsBuffer;
-using UnityEditor.AddressableAssets.Settings;
 using UnityEditor.AddressableAssets;
 
 namespace AddressableAssetTool.Graph
 {
-    internal abstract class AddressableGraphBaseGroup
+    internal abstract class AddressableGraphBaseGroup : GraphBaseGroup
     {
-        public List<GraphElement> m_AssetConnections = new List<GraphElement>();
-        public List<GraphElement> m_AssetNodes = new List<GraphElement>();
-        public List<Node> m_DependenciesForPlacement = new List<Node>();
+        //public List<GraphElement> m_AssetConnections = new List<GraphElement>();
+        
+        //public List<Node> m_DependenciesForPlacement = new List<Node>();
 
-        protected Object _assetRuleObj;
+        //protected Object _assetRuleObj;
 
-        public string _assetRulePath;
-        internal Group groupNode;
-        protected List<Node> groupChildNodes = new List<Node>();
-        protected readonly float kNodeWidth = AddressaableToolKey.Size.x;
-        protected AddressableDependenciesGraph _window;
+        //public string _assetRulePath;
+        
+        //protected List<Node> groupChildNodes = new List<Node>();
+        //protected readonly float kNodeWidth = AddressaableToolKey.Size.x;
+        //protected AddressableDependenciesGraph _window;
 
-        public AddressableGraphBaseGroup(Object obj, AddressableDependenciesGraph addressableDependenciesGraph)
+        public AddressableGraphBaseGroup(Object obj, AddressableDependenciesGraph addressableDependenciesGraph) : base(obj, addressableDependenciesGraph)
         {
             this._assetRuleObj = obj;
             _window = addressableDependenciesGraph;
         }
 
-        internal abstract void SetPosition(Rect pos);
+        internal override void DrawGroup(GraphView m_GraphView, EventCallback<GeometryChangedEvent, GraphBaseGroup> UpdateGroupDependencyNodePlacement,
+            AddressableDependenciesGraph graphWindow)
+        {
+            throw new NotImplementedException();
+        }
 
-        internal abstract void DrawGroup(GraphView m_GraphView, EventCallback<GeometryChangedEvent, AddressableGraphBaseGroup> UpdateGroupDependencyNodePlacement,
-            AddressableDependenciesGraph graphWindow);
-
-        internal virtual bool IsDependence(string dependencyString, out bool isDependence, out string dependencePath)
+        internal override bool IsDependence(string dependencyString, out bool isDependence, out string dependencePath)
         {
             isDependence = false;
             dependencePath = null;
             return false;
         }
 
-        internal virtual bool IsDependence(string dependencyString, out bool isDependence, out Node dependencyNode, out string dependencePath)
+        internal override bool IsDependence(string dependencyString, out bool isDependence, out Node dependencyNode, out string dependencePath)
         {
             isDependence = false;
             dependencyNode = null; 
@@ -82,22 +81,17 @@ namespace AddressableAssetTool.Graph
             Debug.LogError("edge click");
         }
 
-        internal abstract bool IsReliance(string assetPath, out Node[] dependentNodes, out string[] dependentPaths);
-
         internal string[] GetDependencies()
         {
             throw new NotImplementedException();
         }
 
-        internal abstract bool IsReliance(string assetPath, out Node dependencyNode);
-
-
-        internal Rect GetMainNodePositoin()
+        internal override Rect GetMainNodePositoin()
         {
             return new Rect(0, 0, 0, 0);
         }
 
-        internal virtual void UnregisterCallback(EventCallback<GeometryChangedEvent, AddressableGraphBaseGroup> updateGroupDependencyNodePlacement)
+        internal override void UnregisterCallback(EventCallback<GeometryChangedEvent, GraphBaseGroup> updateGroupDependencyNodePlacement)
         {
             foreach (var item in groupChildNodes)
             {
@@ -295,7 +289,7 @@ namespace AddressableAssetTool.Graph
         internal virtual void CreateDependencyNodes(string[] dependencies, Node parentNode,
     Group groupNode, int depth, GraphView m_GraphView, Dictionary<string, Node> m_GUIDNodeLookup, string dependentName)
         {
-            List<AddressableGraphBaseGroup> list = _window._addressableGroups;
+            List<GraphBaseGroup> list = _window._addressableGroups;
 
             foreach (string dependencyString in dependencies)
             {

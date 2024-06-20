@@ -8,7 +8,7 @@ using UnityEngine.UIElements;
 
 namespace AddressableAssetTool.Graph
 {
-    internal class AddressableHoleGroup : AddressableBaseGroup
+    internal class AddressableHoleGroup : AddressableAssetGroup
     {
         private AddressableAssetRule _target;
         private List<Node> mainNodes = new List<Node>();
@@ -58,8 +58,8 @@ namespace AddressableAssetTool.Graph
             return list.ToArray();
         }
 
-        internal override void DrawGroup(AddressableBaseGroup adGroup, Object obj1, GraphView m_GraphView, 
-            EventCallback<GeometryChangedEvent, AddressableBaseGroup> UpdateGroupDependencyNodePlacement, AddressableDependenciesGraph graphWindow)
+        internal override void DrawGroup( GraphView m_GraphView, 
+            EventCallback<GeometryChangedEvent, GraphBaseGroup> UpdateGroupDependencyNodePlacement, AddressableDependenciesGraph graphWindow)
         {
             _assetRulePath = AssetDatabase.GetAssetPath(_target);
 
@@ -78,7 +78,7 @@ namespace AddressableAssetTool.Graph
 
             string[] dependencies = GetDependencies();
 
-            mainNode = CreateNode(adGroup, mainObject, _assetRulePath, true, dependencies.Length, graphWindow.m_GUIDNodeLookup);
+            mainNode = CreateNode(this, mainObject, _assetRulePath, true, dependencies.Length, graphWindow.m_GUIDNodeLookup);
             mainNode.userData = 0;
 
             Rect position = new Rect(0, 0, 0, 0);
@@ -93,7 +93,7 @@ namespace AddressableAssetTool.Graph
 
             groupNode.AddElement(mainNode);
 
-            CreateDependencyNodes(adGroup, dependencies, mainNode, groupNode, 1, m_GraphView, graphWindow.m_GUIDNodeLookup);
+            CreateDependencyNodes(this, dependencies, mainNode, groupNode, 1, m_GraphView, graphWindow.m_GUIDNodeLookup);
 
             m_AssetNodes.Add(mainNode);
 
@@ -101,7 +101,7 @@ namespace AddressableAssetTool.Graph
 
             groupNode.Focus();
 
-            mainNode.RegisterCallback<GeometryChangedEvent, AddressableBaseGroup>(
+            mainNode.RegisterCallback<GeometryChangedEvent, AddressableAssetGroup>(
                 UpdateGroupDependencyNodePlacement, this
             );
 
@@ -147,7 +147,7 @@ namespace AddressableAssetTool.Graph
             groupNode.Focus();*/
         }
 
-        internal void CreateDependencyBetweenMainNodes(AddressableBaseGroup AddressableGroup, string[] dependencies, Node parentNode,
+        internal void CreateDependencyBetweenMainNodes(AddressableAssetGroup AddressableGroup, string[] dependencies, Node parentNode,
           Group groupNode, int depth, GraphView m_GraphView, Dictionary<string, Node> m_GUIDNodeLookup)
         {
             foreach (string dependencyString in dependencies)
@@ -223,10 +223,10 @@ namespace AddressableAssetTool.Graph
             }
         }
 
-        internal override void CreateDependencyNodes(AddressableBaseGroup AddressableGroup, string[] dependencies, Node parentNode,
+        internal override void CreateDependencyNodes(AddressableAssetGroup AddressableGroup, string[] dependencies, Node parentNode,
             Group groupNode, int depth, GraphView m_GraphView, Dictionary<string, Node> m_GUIDNodeLookup)
         {
-            List<AddressableGraphBaseGroup> list = _window._addressableGroups;
+            List<GraphBaseGroup> list = _window._addressableGroups;
 
             foreach (string dependencyString in dependencies)
             {

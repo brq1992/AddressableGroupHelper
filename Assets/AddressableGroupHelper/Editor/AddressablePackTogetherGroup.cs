@@ -16,7 +16,7 @@ namespace AddressableAssetTool.Graph
 
         }
 
-        internal override void DrawGroup(GraphView m_GraphView, EventCallback<GeometryChangedEvent, AddressableGraphBaseGroup> UpdateGroupDependencyNodePlacement, 
+        internal override void DrawGroup(GraphView m_GraphView, EventCallback<GeometryChangedEvent, GraphBaseGroup> UpdateGroupDependencyNodePlacement, 
             AddressableDependenciesGraph graphWindow)
         {
             _assetRulePath = AssetDatabase.GetAssetPath(_assetRuleObj);
@@ -45,7 +45,7 @@ namespace AddressableAssetTool.Graph
             m_GraphView.AddElement(mainNode);
             groupNode.AddElement(mainNode);
 
-            List<AddressableGraphBaseGroup> baseGroupList = _window._addressableGroups;
+            List<GraphBaseGroup> baseGroupList = _window._addressableGroups;
             AddressableAssetSettings setting = AddressableAssetSettingsDefaultObject.Settings;
             AddressableAssetRule rule = _assetRuleObj as AddressableAssetRule;
             var group = setting.FindGroup(rule.name);
@@ -96,7 +96,7 @@ namespace AddressableAssetTool.Graph
 
             groupNode.Focus();
 
-            mainNode.RegisterCallback<GeometryChangedEvent, AddressableGraphBaseGroup>(
+            mainNode.RegisterCallback<GeometryChangedEvent, GraphBaseGroup>(
                 UpdateGroupDependencyNodePlacement, this
             );
         }
@@ -145,7 +145,7 @@ namespace AddressableAssetTool.Graph
         internal override void CreateDependencyNodes(string[] dependencies, Node parentNode,
     Group groupNode, int depth, GraphView m_GraphView, Dictionary<string, Node> m_GUIDNodeLookup, string dependentName)
         {
-            List<AddressableGraphBaseGroup> list = _window._addressableGroups;
+            List<GraphBaseGroup> list = _window._addressableGroups;
 
             foreach (string dependencyString in dependencies)
             {
@@ -381,7 +381,7 @@ namespace AddressableAssetTool.Graph
             AddressableAssetRule rule = _assetRuleObj as AddressableAssetRule;
             if (rule != null && rule.IsReliance(assetPath, out dependentPaths))
             {
-                dependentNodes = new Node[1];
+                dependentNodes = new Node[dependentPaths.Length];
                 for (int i = 0; i < dependentPaths.Length; i++)
                 {
                     string guid = AssetDatabase.AssetPathToGUID(_assetRulePath);
