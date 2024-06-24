@@ -100,6 +100,69 @@ namespace AddressableAssetTool.Graph
             );
         }
 
+        internal static void RemovePrefabInstanceOverrides(GameObject gameObject)
+        {
+            var components = gameObject.GetComponentsInChildren<Transform>(true);
+
+            foreach (var component in components)
+            {
+                PrefabUtility.DisconnectPrefabInstance(component.gameObject);
+            }
+        }
+
+        internal static string GetUniqueAssetPath(string path, bool createNewIfExits = true)
+        {
+            string directory = System.IO.Path.GetDirectoryName(path);
+            string filename = System.IO.Path.GetFileNameWithoutExtension(path);
+            string extension = System.IO.Path.GetExtension(path);
+
+            string newPath = $"{directory}/{filename}{AddressaableToolKey.PrefabVariantName}{extension}";
+            int counter = 1;
+
+            while (System.IO.File.Exists(newPath) && createNewIfExits)
+            {
+                Debug.LogError("This variant has a new prefab! " + newPath);
+                newPath = $"{directory}/{filename}{AddressaableToolKey.PrefabVariantName}{counter}{extension}";
+                counter++;
+            }
+
+            return newPath;
+        }
+
+
+        internal static void GetEntryDependencies(List<string> dependenciesList, string[] directDependencies, bool recursive)
+        {
+            foreach (var path in directDependencies)
+            {
+                if (dependenciesList.Contains(path))
+                {
+                    return;
+
+                }
+
+                dependenciesList.Add(path);
+
+                if (AddressabelUtilities.IsAssetAddressable(path))
+                {
+                    continue;
+                }
+
+                Object asset = AssetDatabase.LoadAssetAtPath<Object>(path);
+                var prefabType = PrefabUtility.GetPrefabAssetType(asset);
+                if (prefabType == PrefabAssetType.Variant)
+                {
+                    var indirectDps = AddressableCache.GetVariantDependencies(path, recursive);
+                    GetEntryDependencies(dependenciesList, indirectDps, recursive);
+                }
+                else
+                {
+                    //Debug.LogError("path " + path);
+                    var indirectDps = AddressableCache.GetDependencies(path, recursive);
+                    GetEntryDependencies(dependenciesList, indirectDps, recursive);
+                }
+            }
+        }
+
         private string[] GetDependencies()
         {
             List<string> list = new List<string>();
