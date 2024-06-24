@@ -184,5 +184,6 @@ namespace AddressableAssetTool
         internal static Vector2 Size = new Vector2(250, 200);
         internal static float NodeRadius = 150;
         internal static float GroupRadius = 440f;
+        internal static string PrefabVariantName = "_New";
     }
 }
