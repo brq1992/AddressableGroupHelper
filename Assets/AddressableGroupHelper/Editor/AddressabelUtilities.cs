@@ -1,6 +1,9 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using UnityEditor;
+using UnityEditor.AddressableAssets.Settings;
+using UnityEditor.AddressableAssets;
+using System.IO;
 
 namespace AddressableAssetTool
 {
@@ -39,6 +42,37 @@ namespace AddressableAssetTool
             }
 
             return dependPaths;
+        }
+
+        internal static bool IsAssetAddressable(Object obj)
+        {
+            AddressableAssetSettings settings = AddressableAssetSettingsDefaultObject.Settings;
+            AddressableAssetEntry entry = settings.FindAssetEntry(AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(obj)));
+            return entry != null;
+        }
+
+        internal static bool IsAssetAddressable(string path)
+        {
+            AddressableAssetSettings settings = AddressableAssetSettingsDefaultObject.Settings;
+            AddressableAssetEntry entry = settings.FindAssetEntry(AssetDatabase.AssetPathToGUID(path));
+            return entry != null;
+        }
+
+        internal static bool IsAFolder(string assetPath)
+        {
+            if (string.IsNullOrEmpty(Path.GetExtension(assetPath)))
+            {
+                return true;
+            }
+            return false;
+        }
+
+        internal static string[] GetAssetRuleGuidsInFolder(string itemPath)
+        {
+            string ruleFilter = string.Format("t:ScriptableObject l:{0}", AddressaableToolKey.ScriptObjAssetLabel);
+            var rulesGUID = AssetDatabase.FindAssets(ruleFilter,
+                new[] { itemPath });
+            return rulesGUID;
         }
     }
 }
