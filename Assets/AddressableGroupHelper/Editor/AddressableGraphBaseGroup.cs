@@ -78,7 +78,6 @@ namespace AddressableAssetTool.Graph
         private void OnMouseUp(MouseUpEvent evt)
         {
             _window.ShowInfoWindow(evt);
-            Debug.LogError("edge click");
         }
 
         internal string[] GetDependencies()
@@ -101,7 +100,8 @@ namespace AddressableAssetTool.Graph
             }
         }
 
-        internal virtual Node CreateNode(Object obj, string assetPath, bool prefabCheck, int dependencyAmount, Dictionary<string, Node> m_GUIDNodeLookup)
+        internal virtual Node CreateNode(Object obj, string assetPath, bool prefabCheck, int outDegree, Dictionary<string, Node> m_GUIDNodeLookup,
+            int inDegree = 0)
         {
             Node resultNode;
             string assetGUID = AssetDatabase.AssetPathToGUID(assetPath);
@@ -224,18 +224,22 @@ namespace AddressableAssetTool.Graph
                 // Ports
                 //if (!isMainNode) {
                 Port realPort = objNode.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, typeof(Object));
-                realPort.portName = "Dependent";
+                realPort.portName = inDegree + " Dependent";
+                realPort.RegisterCallback<MouseUpEvent>(OnInPortMouseUp);
+                DGTool.GetNodeData(realPort.userData, assetGUID);
                 objNode.inputContainer.Add(realPort);
                 //}
 
-                if (dependencyAmount > 0)
+                //if (inDegree > 0)
                 {
 #if UNITY_2018_1
                 Port port = objNode.InstantiatePort(Orientation.Horizontal, Direction.Output, typeof(Object));
 #else
                     Port port = objNode.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(Object));
 #endif
-                    port.portName = dependencyAmount + " Dependencies";
+                    port.portName = outDegree + " Dependencies";
+                    DGTool.GetNodeData(port.userData, assetGUID);
+                    port.RegisterCallback<MouseUpEvent>(OnOutPortMouseUp);
                     objNode.outputContainer.Add(port);
                     objNode.RefreshPorts();
                 }
@@ -249,6 +253,78 @@ namespace AddressableAssetTool.Graph
             }
             m_GUIDNodeLookup[assetGUID] = resultNode;
             return resultNode;
+        }
+
+        protected virtual void OnOutPortMouseUp(MouseUpEvent evt)
+        {
+            VisualElement element = evt.currentTarget as VisualElement;
+            if (element == null)
+            {
+                Debug.LogError(" OnOutPortMouseUp 1");
+                return;
+            }
+
+            Port edge = evt.currentTarget as Port;
+            if (edge == null)
+            {
+                Debug.LogError(" OnOutPortMouseUp 2");
+                return;
+            }
+
+            var data = edge.userData as GraphViewNodeUserData;
+            if (data == null)
+            {
+                Debug.LogError(" OnOutPortMouseUp 3");
+                return;
+            }
+
+            var guid = data.Guid;
+            var node = BaseNodeCreator.guidNodeDic[guid];
+            var inDegree = BaseNodeCreator.graph.GetOutDegree(node);
+            foreach (var item in inDegree)
+            {
+                var asset = AssetDatabase.LoadAssetAtPath<AddressableAssetRule>(AssetDatabase.GUIDToAssetPath(item.Id));
+                if (asset != null && asset.IsRuleUsed)
+                {
+                    _window.AddElement(asset);
+                }
+            }
+        }
+
+        protected virtual void OnInPortMouseUp(MouseUpEvent evt)
+        {
+            VisualElement element = evt.currentTarget as VisualElement;
+            if (element == null)
+            {
+                Debug.LogError(" OnInPortMouseUp 1");
+                return;
+            }
+
+            Port edge = evt.currentTarget as Port;
+            if (edge == null)
+            {
+                Debug.LogError(" OnInPortMouseUp 2");
+                return;
+            }
+
+            var data = edge.userData as GraphViewNodeUserData;
+            if (data == null)
+            {
+                Debug.LogError(" OnInPortMouseUp 3");
+                return;
+            }
+
+            var guid = data.Guid;
+            var node = BaseNodeCreator.guidNodeDic[guid];
+            var inDegree = BaseNodeCreator.graph.GetInDegree(node);
+            foreach (var item in inDegree)
+            {
+                var asset = AssetDatabase.LoadAssetAtPath<AddressableAssetRule>(AssetDatabase.GUIDToAssetPath(item.Id));
+                if (asset != null && asset.IsRuleUsed)
+                {
+                    _window.AddElement(asset);
+                }
+            }
         }
 
         internal virtual string[] GetDependencies(Object obj)

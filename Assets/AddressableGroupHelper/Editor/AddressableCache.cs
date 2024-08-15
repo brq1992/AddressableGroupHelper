@@ -100,7 +100,7 @@ namespace AddressableAssetTool
 
             // When trying to get the dependencies of a prefab, it should check if it is a variant of another prefab.
             // If it is, it should also get all the dependencies of its base prefab.
-            //List<string> list = new List<string>();
+            List<string> list = new List<string>();
             //var assetObj = AssetDatabase.LoadAssetAtPath<Object>(assetPath);
             //var prefabType = PrefabUtility.GetPrefabAssetType(assetObj);
             //if (prefabType == PrefabAssetType.Variant)
@@ -121,16 +121,16 @@ namespace AddressableAssetTool
             //}
 
             var assetDependencyPaths = AssetDatabase.GetDependencies(assetPath, true);
-            //for (int i = 0; i < assetDependencyPaths.Length; i++)
-            //{
-            //    if (!list.Contains(assetDependencyPaths[i]))
-            //    {
-            //        list.Add(assetDependencyPaths[i]);
-            //    }
-            //}
+            for (int i = 0; i < assetDependencyPaths.Length; i++)
+            {
+                if (!list.Contains(assetDependencyPaths[i]))
+                {
+                    list.Add(assetDependencyPaths[i]);
+                }
+            }
 
-            //deps = list.ToArray();
-            recursiveDic.Add(assetPath, assetDependencyPaths);
+            deps = list.ToArray();
+            recursiveDic.Add(assetPath, deps);
             return deps;
         }
 
@@ -138,25 +138,6 @@ namespace AddressableAssetTool
         {
             recursiveDic.Clear();
             noRecursiveDic.Clear();
-        }
-
-        internal static bool TryGetVariantDependencies(string path, out string[] variantDependencies, bool recursive = false)
-        {
-            if(recursive)
-            {
-                if (recursiveDic.TryGetValue(path, out variantDependencies))
-                {
-                    return true;
-                }
-            }
-            else
-            {
-                if (noRecursiveDic.TryGetValue(path, out variantDependencies))
-                {
-                    return false;
-                }
-            }
-            return false;
         }
 
         internal static string[] GetVariantDependencies(string variantPath, bool recursive = false)
@@ -178,10 +159,15 @@ namespace AddressableAssetTool
             }
 
             Object asset = AssetDatabase.LoadAssetAtPath<Object>(variantPath);
+            if (asset == null)
+            {
+                Debug.LogError("Failed to LoadAssetAtPath prefab variant! " + variantPath);
+                return new string[0];
+            }
             GameObject instance = PrefabUtility.InstantiatePrefab(asset) as GameObject;
             if (instance == null)
             {
-                Debug.LogError("Failed to instantiate prefab variant!");
+                Debug.LogError("Failed to instantiate prefab variant! "+ variantPath);
                 return new string[0];
             }
             PrefabUtility.UnpackPrefabInstance(instance, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
@@ -193,6 +179,7 @@ namespace AddressableAssetTool
             Object.DestroyImmediate(instance);
 
             var directDependencies = GetDependencies(newPath, recursive);
+
 
             if (recursive)
             {

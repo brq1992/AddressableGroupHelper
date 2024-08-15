@@ -1,6 +1,6 @@
 using AddressableAssetTool;
+using AddressableAssetTool.Graph;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -9,6 +9,7 @@ using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings;
 using UnityEditor.AddressableAssets.Settings.GroupSchemas;
 using UnityEngine;
+using AddressableAssetGroup = UnityEditor.AddressableAssets.Settings.AddressableAssetGroup;
 
 public class AddresaableTempraryTester : MonoBehaviour
 {
@@ -186,5 +187,147 @@ public class AddresaableTempraryTester : MonoBehaviour
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
 
+        AddressableCache.CacheClear();
+        BaseNodeCreator.Clear();
+
+    }
+
+
+
+    [MenuItem("Assets/Organize File")]
+    private static void OrganizeAtlases()
+    {
+        string folderPath = AssetDatabase.GetAssetPath(Selection.activeObject);
+
+        if (string.IsNullOrEmpty(folderPath) || !Directory.Exists(folderPath))
+        {
+            Debug.LogError("Invalid folder path.");
+            return;
+        }
+
+        string ruleFilter = string.Format("t:ScriptableObject l:{0}", AddressaableToolKey.ScriptObjAssetLabel);
+        var rulesGUID = AssetDatabase.FindAssets(ruleFilter,
+            new[] { folderPath });
+
+        foreach(var guid in rulesGUID)
+        {
+            string assetPath = AssetDatabase.GUIDToAssetPath(guid);
+            string dir = System.IO.Path.GetDirectoryName(assetPath);
+            dir = dir.Replace("\\", "/");
+            string filter = string.Format("t:Object");
+            FindRootAssets(filter, dir);
+        }
+    }
+
+    //dir must be the root directory of the rule. 
+    static List<string> FindRootAssets(string filter, string rootDir)
+    {
+        //Debug.Log("Root dir: " + rootDir);
+        List<string> guids = new List<string>();
+        string[] assetGuids = AssetDatabase.FindAssets(filter, new[] { rootDir });
+        List<string> assetPaths = new List<string>();
+
+        foreach (string guid in assetGuids)
+        {
+            string assetPath = AssetDatabase.GUIDToAssetPath(guid);
+            string childDir = System.IO.Path.GetDirectoryName(assetPath);
+            childDir = childDir.Replace("\\", "/");
+            if (childDir == rootDir && !IsAFolder(assetPath))
+            {
+                //Debug.Log("Found asset: " + assetPath);
+                if (assetPath.EndsWith(".asset"))
+                {
+                    var rootRule = AssetDatabase.LoadAssetAtPath(assetPath, typeof(ScriptableObject)) as AddressableAssetRule;
+                    if (rootRule && rootRule.IsRuleUsed)
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        assetPaths.Add(assetPath);
+                        guids.Add(guid);
+                    }
+                }
+                else
+                {
+                    assetPaths.Add(assetPath);
+                    guids.Add(guid);
+                }
+            }
+            else
+            {
+                string relativePath = assetPath.Substring(rootDir.Length);
+                int slashCount = relativePath.Split('/').Length - 1;
+                if (slashCount == 1)
+                {
+                    //Debug.Log("Found dir: " + assetPath);
+                    List<string> childGuids = FindChildDirAssets(filter, assetPath);
+                    if (childGuids != null)
+                        guids.AddRange(childGuids);
+                }
+
+            }
+        }
+        //Debug.LogError("Root dir: " + rootDir);
+        //foreach (var asset in guids)
+        //{
+        //    string assetPath = AssetDatabase.GUIDToAssetPath(asset);
+        //    Debug.LogError("Valid Item: " + assetPath);
+        //}
+        return guids;
+    }
+
+    private static Dictionary<(string, string), List<string>> _filterDirGuidDic = new Dictionary<(string, string), List<string>>();
+
+    private static List<string> FindChildDirAssets(string filter, string dir)
+    {
+        List<string> guids = new List<string>();
+        List<string> assetPaths = new List<string>();
+        string[] assetGuids = AssetDatabase.FindAssets(filter, new[] { dir });
+        foreach (string guid in assetGuids)
+        {
+            string assetPath = AssetDatabase.GUIDToAssetPath(guid);
+            string childDir = System.IO.Path.GetDirectoryName(assetPath);
+            childDir = childDir.Replace("\\", "/");
+            if (childDir == dir && !IsAFolder(assetPath) )
+            {
+                //Debug.Log("Found asset: " + assetPath);
+                if (assetPath.EndsWith(".asset"))
+                {
+                    var rootRule = AssetDatabase.LoadAssetAtPath(assetPath, typeof(ScriptableObject)) as AddressableAssetRule;
+                    if (rootRule && rootRule.IsRuleUsed)
+                    {
+                        return new List<string>();
+                    }
+                    else
+                    {
+                        assetPaths.Add(assetPath);
+                        guids.Add(guid);
+                    }
+                }
+                else
+                {
+                    assetPaths.Add(assetPath);
+                    guids.Add(guid);
+                }
+            }
+            else
+            {
+                string relativePath = assetPath.Substring(dir.Length);
+                int slashCount = relativePath.Split('/').Length - 1;
+                if (slashCount == 1 && IsAFolder(assetPath))
+                {
+                    //Debug.Log("Found child dir: " + assetPath);
+                    List<string> childGuids = FindChildDirAssets(filter, assetPath);
+                    if (childGuids != null)
+                        guids.AddRange(childGuids);
+                }
+            }
+        }
+        if (!_filterDirGuidDic.ContainsKey((filter, dir)))
+        {
+            _filterDirGuidDic.Add((filter, dir), guids);
+        }
+        return guids;
     }
 }

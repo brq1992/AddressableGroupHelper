@@ -17,6 +17,7 @@ namespace AddressableAssetTool
         private static string[] label = new string[] { AddressaableToolKey.ScriptObjAssetLabel };
 
         [MenuItem("Assets/AddressableAssetManager/Create/Addressable Asset Rules")]
+        [MenuItem("Assets/Addressable Asset Rules")]
         public static void CreateAddressableAssetRule()
         {
             AddressableAssetRule newRule = CreateInstance<AddressableAssetRule>();

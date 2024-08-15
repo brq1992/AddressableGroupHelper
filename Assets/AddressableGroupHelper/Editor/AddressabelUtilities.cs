@@ -74,5 +74,73 @@ namespace AddressableAssetTool
                 new[] { itemPath });
             return rulesGUID;
         }
+
+        internal static string GetUniqueAssetPath(string path, bool createNewIfExits = true)
+        {
+            string directory = System.IO.Path.GetDirectoryName(path);
+            string filename = System.IO.Path.GetFileNameWithoutExtension(path);
+            string extension = System.IO.Path.GetExtension(path);
+
+            string newPath = $"{directory}/{filename}{AddressaableToolKey.PrefabVariantName}{extension}";
+            //directory = directory.Replace("Assets\\Addressables\\", "");
+            //Debug.LogError(directory);
+            //string tempDic = $"{Application.dataPath}\\AddressableTempPrefab\\{directory}";
+            //Debug.LogError(tempDic);
+            //if (!Directory.Exists(tempDic))
+            //{
+            //    Directory.CreateDirectory(tempDic);
+            //}
+            //string newPath = $"{tempDic}/{filename}{AddressaableToolKey.PrefabVariantName}{extension}";
+            int counter = 1;
+
+            while (System.IO.File.Exists(newPath) && createNewIfExits)
+            {
+                Debug.LogError("This variant has a new prefab! " + newPath);
+                newPath = $"{directory}/{filename}{AddressaableToolKey.PrefabVariantName}{counter}{extension}";
+                counter++;
+            }
+
+            return newPath;
+        }
+
+        internal static void GetEntryDependencies(List<string> dependenciesList, string[] directDependencies, bool recursive)
+        {
+
+            //UnityEngine.Debug.LogError("GetEntryDependencies start： " + DateTime.Now.ToString());
+            foreach (var path in directDependencies)
+            {
+                if (dependenciesList.Contains(path))
+                {
+                    continue;
+                }
+
+                dependenciesList.Add(path);
+
+                if (AddressabelUtilities.IsAssetAddressable(path))
+                {
+                    continue;
+                }
+
+                Object asset = AssetDatabase.LoadAssetAtPath<Object>(path);
+                if (asset == null)
+                {
+                    Debug.LogError("load asset failed " + path);
+                    continue;
+                }
+                //UnityEngine.Debug.LogError("GetEntryDependencies path： " + path);
+                var prefabType = PrefabUtility.GetPrefabAssetType(asset);
+
+                if (prefabType == PrefabAssetType.Regular || prefabType == PrefabAssetType.Variant)
+                {
+                    var indirectDps = AddressableCache.GetVariantDependencies(path, recursive);
+                    GetEntryDependencies(dependenciesList, indirectDps, recursive);
+                }
+                else
+                {
+                    var indirectDps = AddressableCache.GetDependencies(path, recursive);
+                    GetEntryDependencies(dependenciesList, indirectDps, recursive);
+                }
+            }
+        }
     }
 }

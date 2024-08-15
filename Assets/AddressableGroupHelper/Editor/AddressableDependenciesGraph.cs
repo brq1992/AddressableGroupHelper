@@ -1,4 +1,6 @@
 
+//using AssetUsageFinder;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using UnityEditor;
@@ -22,7 +24,6 @@ namespace AddressableAssetTool.Graph
         private const float kNodeWidth = 250.0f;
         private Toggle AlignmentToggle;
         private VisualElement _infoWindow;
-       
 
         [MenuItem("Tools/AddressableAssetManager/Dependency Graph")]
         public static void CreateTestGraphViewWindow()
@@ -34,6 +35,47 @@ namespace AddressableAssetTool.Graph
         public void OnEnable()
         {
             CreateGraph();
+
+            if(BaseNodeCreator.Init)
+            {
+                return;
+            }
+
+            EditorUtility.DisplayProgressBar("Addressable Dependencies Graph", "Caculating Asset Dependencies, please wait...", 0);
+
+            BaseNodeCreator.graph.Clear();
+            AddressableCache.CacheClear();
+
+            var getAssetRuleGuids = AddressabelUtilities.GetAssetRuleGuidsInFolder(AddressaableToolKey.RuleSearchPath);
+
+            int totalCount = getAssetRuleGuids.Length;
+            float currentCount = 0;
+            try
+            {
+                foreach (var guid in getAssetRuleGuids)
+                {
+                    var assetPath = AssetDatabase.GUIDToAssetPath(guid);
+                    var asset = AssetDatabase.LoadAssetAtPath<AddressableAssetRule>(assetPath);
+                    if (asset != null && asset.IsRuleUsed)
+                    {
+                        var baseNodeCreator = GroupNodeCreatorFactory.GetCreator(asset);
+                        baseNodeCreator.CreateNode(guid, this);
+                        currentCount++;
+                        EditorUtility.DisplayProgressBar("Addressable Dependencies Graph", "Caculating Asset Dependencies, please wait...", currentCount / totalCount);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(e.ToString());
+            }
+
+            //BaseNodeCreator.graph.PrintGraph();
+
+            EditorUtility.ClearProgressBar();
+
+
+            BaseNodeCreator.Init = true;
         }
 
         void CreateGraph()
@@ -58,7 +100,6 @@ namespace AddressableAssetTool.Graph
             _infoWindow = CreateInfoWindow();
 
         }
-
 
         private VisualElement CreateToolbar()
         {
@@ -146,15 +187,37 @@ namespace AddressableAssetTool.Graph
 
         public void AddElements(Object[] objs)
         {
-            foreach (var obj in objs)
+            foreach(var obj in objs)
             {
+                var itemPath = AssetDatabase.GetAssetPath(obj);
+                if(AssetDatabase.IsValidFolder(itemPath))
+                {
+                    var getAssetRuleGuids = AddressabelUtilities.GetAssetRuleGuidsInFolder(itemPath);
+                    foreach(var guid in getAssetRuleGuids)
+                    {
+                        var assetPath = AssetDatabase.GUIDToAssetPath(guid);
+                        var asset = AssetDatabase.LoadAssetAtPath<AddressableAssetRule>(assetPath);
+                        if(asset != null && asset.IsRuleUsed)
+                        {
+                            AddElement(asset);
+                        }
+                    }
+                    continue;
+                }
+
+                var assetRule = obj as AddressableAssetRule;
+                if(assetRule == null || !assetRule.IsRuleUsed)
+                {
+                    continue;
+                }
+
                 var objPath = AssetDatabase.GetAssetPath(obj);
 
                 //Prevent readding same object
                 if (SelectedObjects.Contains(obj))
                 {
                     string name = obj.name;
-                    Debug.Log("Object " + name + " already loaded "+ objPath);
+                    Debug.Log("Object " + name + " already loaded " + objPath);
                     return;
                 }
 
@@ -179,7 +242,7 @@ namespace AddressableAssetTool.Graph
 
                 //adGroup._assetRulePath = objPath;
 
-                Debug.Log("add obj " + obj.name  + " to selectlist "+ objPath);
+                Debug.Log("add obj " + obj.name + " to selectlist " + objPath);
                 SelectedObjects.Add(obj);
 
                 adGroup.groupNode = new Group { title = obj.name };
@@ -222,12 +285,48 @@ namespace AddressableAssetTool.Graph
         private void AddElements()
         {
             Object[] objs = Selection.objects;
-
-
             AddElements(objs);
+        }
+
+        public void AddElement(Object obj)
+        {
+            var objPath = AssetDatabase.GetAssetPath(obj);
+
+            //Prevent readding same object
+            if (SelectedObjects.Contains(obj))
+            {
+                string name = obj.name;
+                Debug.Log("Object " + name + " already loaded " + objPath);
+                return;
+            }
 
 
-           
+            //assetPath will be empty if obj is null or isn't an asset (a scene object)
+            if (obj == null || string.IsNullOrEmpty(objPath))
+            {
+                Debug.Log("objPath is NullorEmpty");
+                return;
+            }
+
+            Object mainObject = AssetDatabase.LoadMainAssetAtPath(objPath);
+
+            if (mainObject == null)
+            {
+                Debug.Log("Object doesn't exist anymore");
+                return;
+            }
+
+            var adGroup = AddressableBaseGroupFactory.GetGroup(obj, this);// new AddressableBaseGroup();
+            _addressableGroups.Add(adGroup);
+
+            //adGroup._assetRulePath = objPath;
+
+            Debug.Log("add obj " + obj.name + " to selectlist " + objPath);
+            SelectedObjects.Add(obj);
+
+            adGroup.groupNode = new Group { title = obj.name };
+
+            adGroup.DrawGroup(m_GraphView, UpdateGroupDependencyNodePlacement, this);
         }
 
          static void ExtroctMethod(AddressableGraphBaseGroup adGroup, Object obj, GraphView m_GraphView, 
@@ -776,7 +875,23 @@ namespace AddressableAssetTool.Graph
 
         private void OnClickShowReliance()
         {
-            Debug.LogError("show click!");
+            //Debug.LogError("show click!");
+            var userData =  _infoWindow.Q<Button>("ShowReliance").userData as List<EdgeUserData>;
+
+            if(userData == null)
+            {
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(userData[0].Dependence))
+            {
+                //EditorGUIUtility.PingObject(source);                
+                //Selection.activeObject = 
+                var obj = AssetDatabase.LoadAssetAtPath(userData[0].Dependence, typeof(Object));
+                Selection.activeObject = obj;
+                //GuiManager.FileMenu(null);
+            }
+            
         }
 
         #endregion

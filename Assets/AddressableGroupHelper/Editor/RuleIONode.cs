@@ -104,7 +104,7 @@ namespace com.igg.editor
                 {
                     EditorGUILayout.BeginHorizontal();
 
-                    if (GUILayout.Button(item.name, EditorStyles.label, GUILayout.MinWidth(750)))
+                    if (GUILayout.Button(item.name, EditorStyles.label, GUILayout.MinWidth(500), GUILayout.MaxWidth(700)))
                     {
                         EditorGUIUtility.PingObject(item);
                     }

@@ -58,7 +58,8 @@ namespace AddressableAssetTool.Graph
             return false;
         }
 
+        internal abstract bool IsDependence(string dependencyString, out NodeDepenData[] data);
 
-        
+        internal abstract bool IsReliance(string assetPath, out NodeDepenData[] data);
     }
 }

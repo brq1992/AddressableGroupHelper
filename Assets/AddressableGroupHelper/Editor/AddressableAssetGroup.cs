@@ -375,6 +375,16 @@ namespace AddressableAssetTool.Graph
         {
             return mainNode.GetPosition();
         }
+
+        internal override bool IsDependence(string dependencyString, out NodeDepenData[] data)
+        {
+            throw new NotImplementedException();
+        }
+
+        internal override bool IsReliance(string assetPath, out NodeDepenData[] data)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     
