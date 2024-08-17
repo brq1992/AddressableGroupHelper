@@ -1,15 +1,12 @@
 using AddressableAssetTool;
-using AddressableAssetTool.Graph;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using UnityEditor;
 using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings;
 using UnityEditor.AddressableAssets.Settings.GroupSchemas;
 using UnityEngine;
-using AddressableAssetGroup = UnityEditor.AddressableAssets.Settings.AddressableAssetGroup;
 
 public class AddresaableTempraryTester : MonoBehaviour
 {
@@ -71,7 +68,7 @@ public class AddresaableTempraryTester : MonoBehaviour
         }
         var assetSchema = group.GetSchema<BundledAssetGroupSchema>();
         assetSchema.BundleNaming = BundledAssetGroupSchema.BundleNamingStyle.NoHash;
-        assetSchema.BundleMode = rootRule.PackModel == PackMode.PackSeparately ? BundledAssetGroupSchema.BundlePackingMode.PackSeparately : 
+        assetSchema.BundleMode = rootRule.PackModel == BundledAssetGroupSchema.BundlePackingMode.PackSeparately ? BundledAssetGroupSchema.BundlePackingMode.PackSeparately : 
             BundledAssetGroupSchema.BundlePackingMode.PackTogether;
         assetSchema.UseAssetBundleCrc = false;
         var updateSchema = group.GetSchema<ContentUpdateGroupSchema>();
@@ -108,8 +105,10 @@ public class AddresaableTempraryTester : MonoBehaviour
             //Debug.LogError("add " + assetPath);
             var entry = setting.CreateOrMoveEntry(guid, group);
             var dir = Path.GetDirectoryName(assetPath);
+            var dirReplace1 = dir.Replace("Assets/Addressables/", "");
+            var dirReplace2 = dirReplace1.Replace("Assets\\Addressables\\", "");
             var file = Path.GetFileName(assetPath);
-            entry.address = Path.Combine(dir, file).Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            entry.address = Path.Combine(dirReplace2, file).Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
         }
     }
 
@@ -187,12 +186,7 @@ public class AddresaableTempraryTester : MonoBehaviour
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
 
-        AddressableCache.CacheClear();
-        BaseNodeCreator.Clear();
-
     }
-
-
 
     [MenuItem("Assets/Organize File")]
     private static void OrganizeAtlases()
@@ -209,7 +203,7 @@ public class AddresaableTempraryTester : MonoBehaviour
         var rulesGUID = AssetDatabase.FindAssets(ruleFilter,
             new[] { folderPath });
 
-        foreach(var guid in rulesGUID)
+        foreach (var guid in rulesGUID)
         {
             string assetPath = AssetDatabase.GUIDToAssetPath(guid);
             string dir = System.IO.Path.GetDirectoryName(assetPath);
@@ -269,11 +263,11 @@ public class AddresaableTempraryTester : MonoBehaviour
             }
         }
         //Debug.LogError("Root dir: " + rootDir);
-        //foreach (var asset in guids)
-        //{
-        //    string assetPath = AssetDatabase.GUIDToAssetPath(asset);
-        //    Debug.LogError("Valid Item: " + assetPath);
-        //}
+        foreach (var asset in guids)
+        {
+            string assetPath = AssetDatabase.GUIDToAssetPath(asset);
+            Debug.LogError("Valid Item: " + assetPath);
+        }
         return guids;
     }
 
@@ -289,7 +283,7 @@ public class AddresaableTempraryTester : MonoBehaviour
             string assetPath = AssetDatabase.GUIDToAssetPath(guid);
             string childDir = System.IO.Path.GetDirectoryName(assetPath);
             childDir = childDir.Replace("\\", "/");
-            if (childDir == dir && !IsAFolder(assetPath) )
+            if (childDir == dir && !IsAFolder(assetPath))
             {
                 //Debug.Log("Found asset: " + assetPath);
                 if (assetPath.EndsWith(".asset"))

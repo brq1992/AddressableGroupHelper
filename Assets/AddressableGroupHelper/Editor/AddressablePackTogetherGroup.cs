@@ -5,10 +5,8 @@ using UnityEditor.AddressableAssets;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UIElements;
-using System;
 using Object = UnityEngine.Object;
-using System.Runtime.CompilerServices;
-using System.IO;
+using System;
 
 namespace AddressableAssetTool.Graph
 {
@@ -35,23 +33,33 @@ namespace AddressableAssetTool.Graph
             string assetGUID = AssetDatabase.AssetPathToGUID(_assetRulePath);
             int inDegree = -1;
             int outDegree = -1;
-            if (BaseNodeCreator.guidNodeDic.TryGetValue(assetGUID, out var dgNode))
-            {
-                if (dgNode != null)
-                {
-                    inDegree = BaseNodeCreator.graph.GetInDegree(dgNode).Capacity;
-                    outDegree = BaseNodeCreator.graph.GetOutDegree(dgNode).Capacity;
+            //if (BaseNodeCreator.guidNodeDic.TryGetValue(assetGUID, out var dgNode))
+            //{
+            //    if (dgNode != null)
+            //    {
+            //        inDegree = BaseNodeCreator.graph.GetInDegree(dgNode).Capacity;
+            //        outDegree = BaseNodeCreator.graph.GetOutDegree(dgNode).Capacity;
 
-                }
+            //    }
+            //}
+            var graph = BaseNodeCreator.ABResourceGraph;
+            var node = graph.GetNode(assetGUID);
+            if(node != null)
+            {
+                inDegree = node.ReferencedBy.Count;
+                outDegree = node.References.Count;
             }
-            var mainNode = CreateNode(_assetRuleObj, _assetRulePath, true, outDegree, graphWindow.m_GUIDNodeLookup, inDegree);
+            Node mainNode = CreateNode(_assetRuleObj, _assetRulePath, true, outDegree, graphWindow.m_GUIDNodeLookup, inDegree);
             mainNode.userData = new GraphViewNodeUserData() { Depth = 0, Guid = assetGUID };
 
             Rect position = new Rect(0, 0, 0, 0);
-            mainNode.SetPosition(position);
+            //mainNode.SetPosition(position);
+            graphWindow.AddAndPosMainNode(mainNode);
+
             groupChildNodes.Add(mainNode);
 
-            graphWindow.AddAndPosGroupNode(groupNode);
+            //graphWindow.AddAndPosGroupNode(groupNode);
+           
 
             if (!m_GraphView.Contains(groupNode))
             {
@@ -68,12 +76,16 @@ namespace AddressableAssetTool.Graph
             {
                 string entryAssetPath = item.AssetPath;
                 PrefabAssetType prefabType = PrefabAssetType.Regular;
+                if (entryAssetPath.EndsWith(".prefab"))
+                {
+
+                }
                 prefabType = PrefabUtility.GetPrefabAssetType(item.MainAsset);
                 if (prefabType == PrefabAssetType.Variant || prefabType == PrefabAssetType.Regular)
                 {
                     List<string> dependenciesList = new List<string>();
                     var directDependencies = AddressableCache.GetVariantDependencies(item.AssetPath);
-                    GetEntryDependencies(dependenciesList, directDependencies, false);
+                    AddressabelUtilities.GetEntryDependencies(dependenciesList, directDependencies, false);
                     var dependenciesAfterFilter = dependenciesList.ToArray();
                     CreateDependencyNodes(dependenciesAfterFilter, mainNode, groupNode, 1, m_GraphView, graphWindow.m_GUIDNodeLookup, entryAssetPath);
                 }
@@ -81,7 +93,7 @@ namespace AddressableAssetTool.Graph
                 {
                     List<string> dependenciesList = new List<string>();
                     var directDependencies = AddressableCache.GetDependencies(entryAssetPath, false);
-                    GetEntryDependencies(dependenciesList, directDependencies, false);
+                    AddressabelUtilities.GetEntryDependencies(dependenciesList, directDependencies, false);
                     var dependenciesAfterFilter = dependenciesList.ToArray();
                     CreateDependencyNodes(dependenciesAfterFilter, mainNode, groupNode, 1, m_GraphView, graphWindow.m_GUIDNodeLookup, entryAssetPath);
                 }
@@ -135,85 +147,10 @@ namespace AddressableAssetTool.Graph
             }
         }
 
-        internal static string GetUniqueAssetPath(string path, bool createNewIfExits = true)
-        {
-            string directory = System.IO.Path.GetDirectoryName(path);
-            string filename = System.IO.Path.GetFileNameWithoutExtension(path);
-            string extension = System.IO.Path.GetExtension(path);
-
-            string newPath = $"{directory}/{filename}{AddressaableToolKey.PrefabVariantName}{extension}";
-            //directory = directory.Replace("Assets\\Addressables\\", "");
-            //Debug.LogError(directory);
-            //string tempDic = $"{Application.dataPath}\\AddressableTempPrefab\\{directory}";
-            //Debug.LogError(tempDic);
-            //if (!Directory.Exists(tempDic))
-            //{
-            //    Directory.CreateDirectory(tempDic);
-            //}
-            //string newPath = $"{tempDic}/{filename}{AddressaableToolKey.PrefabVariantName}{extension}";
-            int counter = 1;
-
-            while (System.IO.File.Exists(newPath) && createNewIfExits)
-            {
-                Debug.LogError("This variant has a new prefab! " + newPath);
-                newPath = $"{directory}/{filename}{AddressaableToolKey.PrefabVariantName}{counter}{extension}";
-                counter++;
-            }
-
-            return newPath;
-        }
 
 
-        internal static void GetEntryDependencies(List<string> dependenciesList, string[] directDependencies, bool recursive)
-        {
 
-            //UnityEngine.Debug.LogError("GetEntryDependencies start： " + DateTime.Now.ToString());
-            foreach (var path in directDependencies)
-            {
-                if (dependenciesList.Contains(path))
-                {
-                    continue;
-                }
-
-                dependenciesList.Add(path);
-
-                if (AddressabelUtilities.IsAssetAddressable(path))
-                {
-                    continue;
-                }
-
-                Object asset = AssetDatabase.LoadAssetAtPath<Object>(path);
-                if(asset == null)
-                {
-                    Debug.LogError("load asset failed " + path);
-                    continue;
-                }
-                //UnityEngine.Debug.LogError("GetEntryDependencies path： " + path);
-                var prefabType = PrefabUtility.GetPrefabAssetType(asset);
-                //if (prefabType == PrefabAssetType.Variant)
-                //{
-                //    var indirectDps = AddressableCache.GetVariantDependencies(path, recursive);
-                //    GetEntryDependencies(dependenciesList, indirectDps, recursive);
-                //}
-                //else
-                //{
-                //    //Debug.LogError("path " + path);
-                //    var indirectDps = AddressableCache.GetVariantDependencies(path, recursive);
-                //    GetEntryDependencies(dependenciesList, indirectDps, recursive);
-                //}
-
-                if(prefabType == PrefabAssetType.Regular || prefabType == PrefabAssetType.Variant)
-                {
-                    var indirectDps = AddressableCache.GetVariantDependencies(path, recursive);
-                    GetEntryDependencies(dependenciesList, indirectDps, recursive);
-                }
-                else
-                {
-                    var indirectDps = AddressableCache.GetDependencies(path, recursive);
-                    GetEntryDependencies(dependenciesList, indirectDps, recursive);
-                }
-            }
-        }
+        
 
         private string[] GetDependencies()
         {
@@ -257,7 +194,7 @@ namespace AddressableAssetTool.Graph
         }
 
         internal override void CreateDependencyNodes(string[] dependencies, Node parentNode,
-    Group groupNode, int depth, GraphView m_GraphView, Dictionary<string, Node> m_GUIDNodeLookup, string dependentName)
+    Group groupNode, int depth, GraphView m_GraphView, Dictionary<string, Node> m_GUIDNodeLookup, string dependentName, AddressableAssetEntry item = null)
         {
             List<GraphBaseGroup> list = _window._addressableGroups;
 
@@ -338,7 +275,7 @@ namespace AddressableAssetTool.Graph
             {
                 var objNode = new Node
                 {
-                    title = obj.name,
+                    title = obj.name.Substring(0, Math.Min(obj.name.Length, 30)),
                     style =
                 {
                     width = kNodeWidth
@@ -505,11 +442,11 @@ namespace AddressableAssetTool.Graph
             }
 
             var guid = data.Guid;
-            var node = BaseNodeCreator.guidNodeDic[guid];
-            var inDegree = BaseNodeCreator.graph.GetOutDegree(node);
+            var node = BaseNodeCreator.ABResourceGraph.GetNode(guid);
+            var inDegree = node.References;
             foreach (var item in inDegree)
             {
-                var asset = AssetDatabase.LoadAssetAtPath<AddressableAssetRule>(AssetDatabase.GUIDToAssetPath(item.Id));
+                var asset = item.Value.AddressableAssetRule;
                 if (asset != null && asset.IsRuleUsed)
                 {
                     _window.AddElement(asset);
@@ -602,7 +539,7 @@ namespace AddressableAssetTool.Graph
             throw new System.NotImplementedException();
         }
 
-        internal override bool IsDependence(string dependencyString, out NodeDepenData[] data)
+        internal override bool IsDependence(string dependencyString, out NodeDepenData[] data, AddressableAssetEntry item = null)
         {
             AddressableAssetRule rule = _assetRuleObj as AddressableAssetRule;
             if (rule != null && DGTool.HasConnect(dependencyString, rule, out data))// rule.HasConnenct(dependencyString, out isDependence, out edgeUserData))
@@ -618,7 +555,7 @@ namespace AddressableAssetTool.Graph
             return false;
         }
 
-        internal override bool IsReliance(string assetPath, out NodeDepenData[] data)
+        internal override bool IsReliance(string assetPath, out NodeDepenData[] data, UnityEditor.AddressableAssets.Settings.AddressableAssetEntry item = null)
         {
             AddressableAssetRule rule = _assetRuleObj as AddressableAssetRule;
             if (rule != null && DGTool.IsReliance(assetPath, rule, out data))// rule.HasConnenct(dependencyString, out isDependence, out edgeUserData))

@@ -376,12 +376,12 @@ namespace AddressableAssetTool.Graph
             return mainNode.GetPosition();
         }
 
-        internal override bool IsDependence(string dependencyString, out NodeDepenData[] data)
+        internal override bool IsDependence(string dependencyString, out NodeDepenData[] data , UnityEditor.AddressableAssets.Settings.AddressableAssetEntry item = null)
         {
             throw new NotImplementedException();
         }
 
-        internal override bool IsReliance(string assetPath, out NodeDepenData[] data)
+        internal override bool IsReliance(string assetPath, out NodeDepenData[] data, UnityEditor.AddressableAssets.Settings.AddressableAssetEntry item = null)
         {
             throw new NotImplementedException();
         }

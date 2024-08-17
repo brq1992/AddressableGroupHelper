@@ -6,6 +6,7 @@ using UnityEngine;
 using Object = UnityEngine.Object;
 using UnityEditor;
 using UnityEditor.AddressableAssets;
+using UnityEditor.AddressableAssets.Settings;
 
 namespace AddressableAssetTool.Graph
 {
@@ -114,7 +115,7 @@ namespace AddressableAssetTool.Graph
             {
                 var objNode = new Node
                 {
-                    title = obj.name,
+                    title = obj.name.Substring(0, Math.Min(obj.name.Length,30)),
                     style =
                 {
                     width = kNodeWidth
@@ -363,7 +364,7 @@ namespace AddressableAssetTool.Graph
         }
 
         internal virtual void CreateDependencyNodes(string[] dependencies, Node parentNode,
-    Group groupNode, int depth, GraphView m_GraphView, Dictionary<string, Node> m_GUIDNodeLookup, string dependentName)
+    Group groupNode, int depth, GraphView m_GraphView, Dictionary<string, Node> m_GUIDNodeLookup, string dependentName, AddressableAssetEntry item = null)
         {
             List<GraphBaseGroup> list = _window._addressableGroups;
 
@@ -402,7 +403,7 @@ namespace AddressableAssetTool.Graph
 
             if (_targetGroup != null)
             {
-                foreach (var item in _targetGroup.entries)
+                foreach (var item1 in _targetGroup.entries)
                 {
                     foreach (var group in list)
                     {

@@ -1,5 +1,4 @@
 
-using AddressableAssetTool.Graph;
 using System.IO;
 using UnityEditor;
 using UnityEditor.AddressableAssets;
@@ -17,7 +16,6 @@ namespace AddressableAssetTool
             OnMoveAsset(sourcePath, destinationPath);
 
             AddressableCache.CacheClear();
-            BaseNodeCreator.Clear();
             return AssetMoveResult.DidNotMove;
         }
 

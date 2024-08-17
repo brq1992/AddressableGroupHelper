@@ -3,6 +3,7 @@ using AddressableAssetTool.Graph;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.U2D;
 using Object = UnityEngine.Object;
 
 namespace AddressableAssetTool
@@ -11,7 +12,8 @@ namespace AddressableAssetTool
     {
         private static Dictionary<string, string[]> recursiveDic = new Dictionary<string, string[]>();
         private static Dictionary<string, string[]> noRecursiveDic = new Dictionary<string, string[]>();
-
+        private static Dictionary<string, string> _spriteDic = new Dictionary<string, string>();
+        private static Dictionary<string, string[]> _atlasSpritesDic = new Dictionary<string, string[]>();
         internal static string[] GetDependencies(string assetPath, bool recursive)
         {
             if(recursive)
@@ -32,60 +34,7 @@ namespace AddressableAssetTool
                 return deps;
             }
 
-            // When trying to get the dependencies of a prefab, it should check if it is a variant of another prefab.
-            // If it is, it should also get all the dependencies of its base prefab.
-            //List<string> list = new List<string>();
-            //var assetObj = AssetDatabase.LoadAssetAtPath<Object>(assetPath);
-            //var prefabType = PrefabUtility.GetPrefabAssetType(assetObj);
-            //if (prefabType == PrefabAssetType.Variant)
-            //{
-            //    var basePrefab = PrefabUtility.GetCorrespondingObjectFromSource(assetObj);
-            //    if (basePrefab != null)
-            //    {
-            //        var basePrefabPath = AssetDatabase.GetAssetPath(basePrefab);
-            //        // Temporarily disable this code since the base prefab will refer to internal assets in the same bundle
-            //        // that will cause variant prefab get the wroing dependencies
-            //        var basePrefabDepenPaths = AssetDatabase.GetDependencies(basePrefabPath, false); //AddressabelUtilities.GetDependPaths(AssetDatabase.GUIDToAssetPath(guid), _includeIndirect);
-            //        foreach (var basePrefabDepenPath in basePrefabDepenPaths)
-            //        {
-            //            if (!list.Contains(basePrefabDepenPath))
-            //            {
-            //                list.Add(basePrefabDepenPath);
-            //            }
-            //        }
-
-            //        //Variant prefab need to remove its base prefab, since assetbundle will not contain it.
-            //        var assetVariantDependencyPaths = AssetDatabase.GetDependencies(assetPath, false);
-            //        for (int i = 0; i < assetVariantDependencyPaths.Length; i++)
-            //        {
-            //            if (assetVariantDependencyPaths[i].Equals(basePrefabPath))
-            //            {
-            //                continue;
-            //            }
-
-            //            if (!list.Contains(assetVariantDependencyPaths[i]))
-            //            {
-            //                list.Add(assetVariantDependencyPaths[i]);
-            //            }
-            //        }
-
-            //        deps = list.ToArray();
-            //        noRecursiveDic.Add(assetPath, deps);
-            //        return deps;
-            //    }
-            //}
-
             var assetDependencyPaths = AssetDatabase.GetDependencies(assetPath, false);
-            //for (int i = 0; i < assetDependencyPaths.Length; i++)
-            //{
-            //    if (!list.Contains(assetDependencyPaths[i]))
-            //    {
-            //        list.Add(assetDependencyPaths[i]);
-            //    }
-            //}
-
-            //deps = list.ToArray();
-
             noRecursiveDic.Add(assetPath, assetDependencyPaths);
             return assetDependencyPaths;
         }
@@ -97,41 +46,8 @@ namespace AddressableAssetTool
             {
                 return deps;
             }
-
-            // When trying to get the dependencies of a prefab, it should check if it is a variant of another prefab.
-            // If it is, it should also get all the dependencies of its base prefab.
-            List<string> list = new List<string>();
-            //var assetObj = AssetDatabase.LoadAssetAtPath<Object>(assetPath);
-            //var prefabType = PrefabUtility.GetPrefabAssetType(assetObj);
-            //if (prefabType == PrefabAssetType.Variant)
-            //{
-            //    var basePrefab = PrefabUtility.GetCorrespondingObjectFromSource(assetObj);
-            //    if (basePrefab != null)
-            //    {
-            //        var basePrefabPath = AssetDatabase.GetAssetPath(basePrefab);
-            //        var basePrefabDepenPaths = AssetDatabase.GetDependencies(basePrefabPath, true); //AddressabelUtilities.GetDependPaths(AssetDatabase.GUIDToAssetPath(guid), _includeIndirect);
-            //        foreach (var basePrefabDepenPath in basePrefabDepenPaths)
-            //        {
-            //            if (!list.Contains(basePrefabDepenPath))
-            //            {
-            //                list.Add(basePrefabDepenPath);
-            //            }
-            //        }
-            //    }
-            //}
-
             var assetDependencyPaths = AssetDatabase.GetDependencies(assetPath, true);
-            for (int i = 0; i < assetDependencyPaths.Length; i++)
-            {
-                if (!list.Contains(assetDependencyPaths[i]))
-                {
-                    list.Add(assetDependencyPaths[i]);
-                }
-            }
-
-            deps = list.ToArray();
-            recursiveDic.Add(assetPath, deps);
-            return deps;
+            return assetDependencyPaths;
         }
 
         internal static void CacheClear()
@@ -140,12 +56,31 @@ namespace AddressableAssetTool
             noRecursiveDic.Clear();
         }
 
+        internal static bool TryGetVariantDependencies(string path, out string[] variantDependencies, bool recursive = false)
+        {
+            if(recursive)
+            {
+                if (recursiveDic.TryGetValue(path, out variantDependencies))
+                {
+                    return true;
+                }
+            }
+            else
+            {
+                if (noRecursiveDic.TryGetValue(path, out variantDependencies))
+                {
+                    return false;
+                }
+            }
+            return false;
+        }
+
         internal static string[] GetVariantDependencies(string variantPath, bool recursive = false)
         {
-            string newPath = AddressablePackTogetherGroup.GetUniqueAssetPath(variantPath);
+            string newPath = AddressabelUtilities.GetUniqueAssetPath(variantPath);
             if (recursive)
             {
-                if(recursiveDic.TryGetValue(newPath, out var dps))
+                if (recursiveDic.TryGetValue(newPath, out var dps))
                 {
                     return dps;
                 }
@@ -167,7 +102,7 @@ namespace AddressableAssetTool
             GameObject instance = PrefabUtility.InstantiatePrefab(asset) as GameObject;
             if (instance == null)
             {
-                Debug.LogError("Failed to instantiate prefab variant! "+ variantPath);
+                Debug.LogError("Failed to instantiate prefab variant! " + variantPath);
                 return new string[0];
             }
             PrefabUtility.UnpackPrefabInstance(instance, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
@@ -181,6 +116,7 @@ namespace AddressableAssetTool
             var directDependencies = GetDependencies(newPath, recursive);
 
 
+            //TODO: Check if it need to use variantPath to replace it.
             if (recursive)
             {
                 recursiveDic[newPath] = directDependencies;
@@ -193,6 +129,40 @@ namespace AddressableAssetTool
             AssetDatabase.DeleteAsset(newPath);
 
             return directDependencies;
+        }
+
+        internal static bool CheckSpriteReference(string entryAssetPath, out string atlasGuid)
+        {
+            if(_spriteDic.TryGetValue(entryAssetPath, out var guid))
+            {
+                atlasGuid = guid;
+                return true;
+            }
+
+            string[] atlasPaths = AssetDatabase.FindAssets("t:SpriteAtlas");
+            foreach(var itemAtlas in atlasPaths)
+            {
+                if (_atlasSpritesDic.TryGetValue(itemAtlas, out var dependencies))
+                {
+
+                }
+                else
+                {
+                    dependencies = AssetDatabase.GetDependencies(AssetDatabase.GUIDToAssetPath(itemAtlas));
+                    _atlasSpritesDic.Add(itemAtlas, dependencies);
+                }
+                foreach(var spriteName in dependencies)
+                {
+                    if(entryAssetPath.Equals(spriteName))
+                    {
+                        atlasGuid = itemAtlas;
+                        _spriteDic.Add(entryAssetPath, atlasGuid);
+                        return true;
+                    }
+                }
+            }
+            atlasGuid = string.Empty;
+            return false;
         }
     }
 }

@@ -3,6 +3,7 @@ using UnityEditor;
 using UnityEditor.AddressableAssets.Settings;
 using UnityEditor.AddressableAssets;
 using UnityEngine;
+using UnityEditor.AddressableAssets.Settings.GroupSchemas;
 
 namespace AddressableAssetTool.Graph
 {
@@ -26,7 +27,6 @@ namespace AddressableAssetTool.Graph
                 string guid = AssetDatabase.AssetPathToGUID(entryAssetPath);
 
                 DirectedGraph.Node dgNode = new DirectedGraph.Node(guid, item.AssetPath);
-                dgNode.Rule = asset;
                 graph.AddNode(dgNode);
                
                 var prefabType = PrefabUtility.GetPrefabAssetType(item.MainAsset);
@@ -34,7 +34,7 @@ namespace AddressableAssetTool.Graph
                 {
                     List<string> dependenciesList = new List<string>();
                     var directDependencies = AddressableCache.GetVariantDependencies(item.AssetPath);
-                    AddressablePackTogetherGroup.GetEntryDependencies(dependenciesList, directDependencies, false);
+                    AddressabelUtilities.GetEntryDependencies(dependenciesList, directDependencies, false);
                     var dependenciesAfterFilter = dependenciesList.ToArray();
                     CreateDependencyNodes(dependenciesAfterFilter, guid, dgNode);
                 }
@@ -42,7 +42,7 @@ namespace AddressableAssetTool.Graph
                 {
                     List<string> dependenciesList = new List<string>();
                     var directDependencies = AddressableCache.GetDependencies(entryAssetPath, false);
-                    AddressablePackTogetherGroup.GetEntryDependencies(dependenciesList, directDependencies, false);
+                    AddressabelUtilities.GetEntryDependencies(dependenciesList, directDependencies, false);
                     var dependenciesAfterFilter = dependenciesList.ToArray();
                     CreateDependencyNodes(dependenciesAfterFilter, guid, dgNode);
                 }
@@ -61,7 +61,7 @@ namespace AddressableAssetTool.Graph
                         string ruleGuid = AssetDatabase.AssetPathToGUID(_assetRulePath);
                         for (int i = 0; i < data.Length; i++)
                         {
-                            if (rule.PackModel == PackMode.PackTogether)
+                            if (rule.PackModel == BundledAssetGroupSchema.BundlePackingMode.PackTogether)
                                 data[i].DependencyGraphNode = guidNodeDic[ruleGuid];
                             else
                                 data[i].DependencyGraphNode = guidNodeDic[data[i].Guids[0]];
@@ -101,7 +101,7 @@ namespace AddressableAssetTool.Graph
                         string assetRuleGuid = AssetDatabase.AssetPathToGUID(path);
                         for (int i = 0; i < data.Length; i++)
                         {
-                            if (rule.PackModel == PackMode.PackTogether)
+                            if (rule.PackModel == BundledAssetGroupSchema.BundlePackingMode.PackTogether)
                                 data[i].DependencyGraphNode = guidNodeDic[assetRuleGuid];
                             else
                                 data[i].DependencyGraphNode = guidNodeDic[data[i].Guids[0]];

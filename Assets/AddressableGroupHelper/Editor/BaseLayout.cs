@@ -32,9 +32,21 @@ namespace AddressableAssetTool.Graph
             return new Rect(x, y, 0, 0);
         }
 
-        internal static Rect GetNewGroupNodePosition(List<Group> groups)
+        internal static Rect GetNewGroupNodePosition(int Count)
+        {
+            float angle = Count * Mathf.PI * (3 - Mathf.Sqrt(5));
+            float radius = AddressaableToolKey.GroupRadius * Mathf.Sqrt(Count);
+
+            float x = radius * Mathf.Cos(angle);
+            float y = radius * Mathf.Sin(angle);
+
+            return new Rect(x, y, 0, 0);
+        }
+
+        internal static Rect GetNewGroupNodePosition(List<Node> groups)
         {
             int n = groups.Count;
+            //Debug.LogError("n " + n);
             float angle = n * Mathf.PI * (3 - Mathf.Sqrt(5));
             float radius = AddressaableToolKey.GroupRadius * Mathf.Sqrt(n);
 

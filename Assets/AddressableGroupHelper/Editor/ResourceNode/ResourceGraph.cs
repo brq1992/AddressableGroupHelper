@@ -5,169 +5,228 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-public class ResourceGraph
+namespace AddressableAssetTool.Graph
 {
-    private ConcurrentDictionary<string, ResourceNode> nodes;
-
-    public ResourceGraph()
+    public class ResourceGraph
     {
-        nodes = new ConcurrentDictionary<string, ResourceNode>();
-    }
+        private ConcurrentDictionary<string, ResourceNode> nodes;
+        private Dictionary<(ResourceNode, ResourceNode), List<(string, string)>> adjacencyList;
 
-    public ResourceNode GetOrCreateNode(string resourceId)
-    {
-        if (string.IsNullOrEmpty(resourceId))
-            throw new ArgumentException("Resource ID cannot be null or empty.");
-
-        return nodes.GetOrAdd(resourceId, id => new ResourceNode(id));
-    }
-
-    public void AddReference(string fromResourceId, string toResourceId)
-    {
-        if (string.IsNullOrEmpty(fromResourceId) || string.IsNullOrEmpty(toResourceId))
-            throw new ArgumentException("Resource ID cannot be null or empty.");
-
-        var fromNode = GetOrCreateNode(fromResourceId);
-        var toNode = GetOrCreateNode(toResourceId);
-        fromNode.AddReference(toNode);
-    }
-
-    public ResourceNode GetNode(string resourceId)
-    {
-        if (string.IsNullOrEmpty(resourceId))
-            throw new ArgumentException("Resource ID cannot be null or empty.");
-
-        nodes.TryGetValue(resourceId, out var node);
-        return node;
-    }
-
-    public IEnumerable<ResourceNode> GetAllNodes()
-    {
-        return nodes.Values;
-    }
-
-    public List<List<string>> GetAllCircularReferences()
-    {
-        var allCircularReferences = new List<List<string>>();
-        var visited = new HashSet<string>();
-        var stack = new HashSet<string>();
-        var path = new Stack<string>();
-
-        foreach (var node in GetAllNodes())
+        public ResourceGraph()
         {
-            GetCircularReferencesRecursive(node, visited, stack, path, allCircularReferences);
+            nodes = new ConcurrentDictionary<string, ResourceNode>();
+            adjacencyList = new Dictionary<(ResourceNode, ResourceNode), List<(string, string)>>();
         }
 
-        return allCircularReferences;
-    }
-
-    private void GetCircularReferencesRecursive(ResourceNode node, HashSet<string> visited, HashSet<string> stack, Stack<string> path,
-        List<List<string>> allCircularReferences)
-    {
-        string assetPath = AssetDatabase.GUIDToAssetPath(node.ResourceId);
-        if (stack.Contains(node.ResourceId))
+        public ResourceNode GetOrCreateNode(string resourceId)
         {
-            var circularPath = path.Reverse().ToList();
-            circularPath.Add(node.ResourceId);
-            allCircularReferences.Add(circularPath);
-            return;
+            if (string.IsNullOrEmpty(resourceId))
+                throw new ArgumentException("Resource ID cannot be null or empty.");
+
+            return nodes.GetOrAdd(resourceId, id => new ResourceNode(id));
         }
 
-        if (visited.Contains(node.ResourceId))
+        public void AddReference(string fromResourceId, string toResourceId)
         {
-            return;
+            if (string.IsNullOrEmpty(fromResourceId) || string.IsNullOrEmpty(toResourceId))
+                throw new ArgumentException("Resource ID cannot be null or empty.");
+
+            var fromNode = GetOrCreateNode(fromResourceId);
+            var toNode = GetOrCreateNode(toResourceId);
+            fromNode.AddReference(toNode);
+
+            if(!adjacencyList.ContainsKey((fromNode, toNode)))
+                adjacencyList.Add((fromNode, toNode), new List<(string, string)>());
         }
 
-        visited.Add(node.ResourceId);
-        stack.Add(node.ResourceId);
-        path.Push(node.ResourceId);
-
-        foreach (var reference in node.References)
+        public ResourceNode GetNode(string resourceId)
         {
-            GetCircularReferencesRecursive(reference.Value, visited, stack, path, allCircularReferences);
+            if (string.IsNullOrEmpty(resourceId))
+                throw new ArgumentException("Resource ID cannot be null or empty.");
+
+            nodes.TryGetValue(resourceId, out var node);
+            return node;
         }
 
-        stack.Remove(node.ResourceId);
-        path.Pop();
-    }
-
-    public int GetReferenceDepth(string resourceId)
-    {
-        var node = GetNode(resourceId);
-        if (node == null)
-            return 0;
-
-        var visited = new HashSet<string>();
-        return GetReferenceDepthRecursive(node, visited);
-    }
-
-    private int GetReferenceDepthRecursive(ResourceNode node, HashSet<string> visited)
-    {
-        if (visited.Contains(node.ResourceId))
-            return 0;
-
-        visited.Add(node.ResourceId);
-        int maxDepth = 0;
-
-        foreach (var reference in node.References)
+        public IEnumerable<ResourceNode> GetAllNodes()
         {
-            int depth = GetReferenceDepthRecursive(reference.Value, visited);
-            maxDepth = Math.Max(maxDepth, depth);
+            return nodes.Values;
         }
 
-        visited.Remove(node.ResourceId);
-        return maxDepth + 1;
-    }
-
-    // 计算并输出所有节点的依赖层级
-    public void PrintAllNodesDepth()
-    {
-        foreach (var node in GetAllNodes())
+        public List<List<string>> GetAllCircularReferences()
         {
-            int depth = GetReferenceDepth(node.ResourceId);
-            Debug.LogError($"Resource {node.ResourceId} depth: {depth}");
+            var allCircularReferences = new List<List<string>>();
+            var visited = new HashSet<string>();
+            var stack = new HashSet<string>();
+            var path = new Stack<string>();
+
+            foreach (var node in GetAllNodes())
+            {
+                GetCircularReferencesRecursive(node, visited, stack, path, allCircularReferences);
+            }
+
+            return allCircularReferences;
         }
+
+        private void GetCircularReferencesRecursive(ResourceNode node, HashSet<string> visited, HashSet<string> stack, Stack<string> path,
+            List<List<string>> allCircularReferences)
+        {
+            if (stack.Contains(node.ResourceId))
+            {
+                var circularPath = path.Reverse().ToList();
+                circularPath.Add(node.ResourceId);
+                allCircularReferences.Add(circularPath);
+                return;
+            }
+
+            if (visited.Contains(node.ResourceId))
+            {
+                return;
+            }
+
+            visited.Add(node.ResourceId);
+            stack.Add(node.ResourceId);
+            path.Push(node.ResourceId);
+
+            foreach (var reference in node.References)
+            {
+                GetCircularReferencesRecursive(reference.Value, visited, stack, path, allCircularReferences);
+            }
+
+            stack.Remove(node.ResourceId);
+            path.Pop();
+        }
+
+        public int GetReferenceDepth(string resourceId, out List<string> paths)
+        {
+            paths = new List<string>();
+            var node = GetNode(resourceId);
+            if (node == null)
+                return 0;
+
+            var visited = new HashSet<string>();
+            return GetReferenceDepthRecursive(node, visited, paths);
+        }
+
+        private int GetReferenceDepthRecursive(ResourceNode node, HashSet<string> visited, List<string> paths)
+        {
+            if (visited.Contains(node.ResourceId))
+            {
+                paths.Add(AssetDatabase.GUIDToAssetPath(node.ResourceId));
+                return 0;
+            }
+               
+
+            visited.Add(node.ResourceId);
+            int maxDepth = 0;
+
+            foreach (var reference in node.References)
+            {
+                int depth = GetReferenceDepthRecursive(reference.Value, visited, paths);
+                maxDepth = Math.Max(maxDepth, depth);
+            }
+
+            visited.Remove(node.ResourceId);
+            return maxDepth + 1;
+        }
+
+        // 计算并输出所有节点的依赖层级
+        public void PrintAllNodesDepth()
+        {
+            foreach (var node in GetAllNodes())
+            {
+                List<string> paths = new List<string>();
+                int depth = GetReferenceDepth(node.ResourceId, out paths);
+                string output = string.Join("-> " , paths);
+                Debug.LogError($"Resource {AssetDatabase.GUIDToAssetPath(node.ResourceId)} depth: {--depth} paths {output}");
+            }
+        }
+
+        internal void Clear()
+        {
+            var enumerator = nodes.GetEnumerator();
+            while(enumerator.MoveNext())
+            {
+                enumerator.Current.Value.Clear();
+            }
+            nodes.Clear();
+        }
+
+        public void AddEdge(ResourceNode from, string fromName, ResourceNode to, string toName, float weight = 1.0f)
+        {
+            adjacencyList[(from, to)].Add((fromName, toName));
+        }
+
+        public void RemoveEdge(ResourceNode from, ResourceNode to)
+        {
+            if (adjacencyList.ContainsKey((from, to)))
+            {
+                adjacencyList[(from, to)].Clear();
+            }
+        }
+
+        public List<(string, string)> GetOutDegree(ResourceNode from, ResourceNode to)
+        {
+            if (adjacencyList.TryGetValue((from, to), out var result))
+            {
+                return result;
+            }
+            return new List<(string, string)>();
+        }
+
+        //public List<ResourceNode> GetInDegree(ResourceNode node)
+        //{
+        //    if (reverseAdjacencyList.ContainsKey(node))
+        //    {
+        //        return reverseAdjacencyList[node].Select(edge => edge.From).ToList();
+        //    }
+        //    return new List<ResourceNode>();
+        //}
     }
-}
 
-public class ResourceNode
-{
-    public string ResourceId { get; private set; }
-    public ConcurrentDictionary<string, ResourceNode> References { get; private set; }
-    public ConcurrentDictionary<string, ResourceNode> ReferencedBy { get; private set; }
-
-    public ResourceNode(string resourceId)
+    public partial class ResourceNode
     {
-        ResourceId = resourceId;
-        References = new ConcurrentDictionary<string, ResourceNode>();
-        ReferencedBy = new ConcurrentDictionary<string, ResourceNode>();
-    }
+        public string ResourceId { get; private set; }
+        public ConcurrentDictionary<string, ResourceNode> References { get; private set; }
+        public ConcurrentDictionary<string, ResourceNode> ReferencedBy { get; private set; }
 
-    public void AddReference(ResourceNode node)
-    {
-        if (node == null)
-            throw new ArgumentNullException(nameof(node));
+        public ResourceNode(string resourceId)
+        {
+            ResourceId = resourceId;
+            References = new ConcurrentDictionary<string, ResourceNode>();
+            ReferencedBy = new ConcurrentDictionary<string, ResourceNode>();
 
-        //Debug.LogError("node " + this.ResourceId + " add " + node.ResourceId);
-        References[node.ResourceId] = node;
-        node.ReferencedBy[this.ResourceId] = this;
-        //Debug.LogError("node " + node.ResourceId + " referby " + this.ResourceId);
-    }
+            ExConstruct();
+        }
 
-    public bool HasReference(ResourceNode node)
-    {
-        if (node == null)
-            throw new ArgumentNullException(nameof(node));
+        public void AddReference(ResourceNode node)
+        {
+            if (node == null)
+                throw new ArgumentNullException(nameof(node));
 
-        return References.ContainsKey(node.ResourceId);
-    }
+            //Debug.LogError("node " + this.ResourceId + " add " + node.ResourceId);
+            References[node.ResourceId] = node;
+            node.ReferencedBy[this.ResourceId] = this;
+            //Debug.LogError("node " + node.ResourceId + " referby " + this.ResourceId);
+        }
 
-    public void RemoveReference(ResourceNode node)
-    {
-        if (node == null)
-            throw new ArgumentNullException(nameof(node));
+        public bool HasReference(ResourceNode node)
+        {
+            if (node == null)
+                throw new ArgumentNullException(nameof(node));
 
-        References.TryRemove(node.ResourceId, out _);
-        node.ReferencedBy.TryRemove(this.ResourceId, out _);
+            return References.ContainsKey(node.ResourceId);
+        }
+
+        public void RemoveReference(ResourceNode node)
+        {
+            if (node == null)
+                throw new ArgumentNullException(nameof(node));
+
+            References.TryRemove(node.ResourceId, out _);
+            node.ReferencedBy.TryRemove(this.ResourceId, out _);
+        }
+
+
     }
 }

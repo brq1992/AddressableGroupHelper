@@ -1,9 +1,10 @@
 ﻿
 
+using com.igg.editor;
 using System;
 using System.Collections.Generic;
 using UnityEditor;
-using UnityEngine;
+using UnityEditor.AddressableAssets.Settings.GroupSchemas;
 
 namespace AddressableAssetTool.Graph
 {
@@ -41,7 +42,7 @@ namespace AddressableAssetTool.Graph
                         string assetRuleGuid = AssetDatabase.AssetPathToGUID(path);
                         for (int i = 0; i < data.Length; i++)
                         {
-                            if (rule.PackModel == PackMode.PackTogether)
+                            if (rule.PackModel == BundledAssetGroupSchema.BundlePackingMode.PackTogether)
                                 data[i].DependencyGraphNode = guidNodeDic[assetRuleGuid];
                             else
                                 data[i].DependencyGraphNode = guidNodeDic[data[i].Guids[0]];
@@ -66,10 +67,21 @@ namespace AddressableAssetTool.Graph
             }
         }
 
-        internal static void Clear()
+
+
+
+
+        #region NewNode
+
+        internal static bool NewNodeInit = false;
+
+        internal static ResourceGraph ABResourceGraph = new ResourceGraph();
+        internal static void ClearABGraphData()
         {
-            guidNodeDic.Clear();
-            graph.Clear();
+            NewNodeInit = false;
+            ABResourceGraph.Clear();
         }
+
+        #endregion
     }
 }

@@ -75,6 +75,13 @@ namespace AddressableAssetTool
             return rulesGUID;
         }
 
+        internal static string[] GetObjectInFolder<T>(string dic) where T: Object
+        {
+            string ruleFilter = string.Format("t:{0}", typeof(T).Name);
+            var rulesGUID = AssetDatabase.FindAssets(ruleFilter, new[] { dic });
+            return rulesGUID;
+        }
+
         internal static string GetUniqueAssetPath(string path, bool createNewIfExits = true)
         {
             string directory = System.IO.Path.GetDirectoryName(path);
@@ -105,7 +112,6 @@ namespace AddressableAssetTool
 
         internal static void GetEntryDependencies(List<string> dependenciesList, string[] directDependencies, bool recursive)
         {
-
             //UnityEngine.Debug.LogError("GetEntryDependencies start： " + DateTime.Now.ToString());
             foreach (var path in directDependencies)
             {
@@ -124,12 +130,45 @@ namespace AddressableAssetTool
                 Object asset = AssetDatabase.LoadAssetAtPath<Object>(path);
                 if (asset == null)
                 {
-                    Debug.LogError("load asset failed " + path);
+                    Debug.LogError("GetEntryDependencies failed when load asset at path: " + path);
                     continue;
                 }
                 //UnityEngine.Debug.LogError("GetEntryDependencies path： " + path);
                 var prefabType = PrefabUtility.GetPrefabAssetType(asset);
 
+                if (prefabType == PrefabAssetType.Regular || prefabType == PrefabAssetType.Variant)
+                {
+                    var indirectDps = AddressableCache.GetVariantDependencies(path, recursive);
+                    GetEntryDependencies(dependenciesList, indirectDps, recursive);
+                }
+                else
+                {
+                    var indirectDps = AddressableCache.GetDependencies(path, recursive);
+                    GetEntryDependencies(dependenciesList, indirectDps, recursive);
+                }
+            }
+        }
+
+        internal static void GetAllDependencies(List<string> dependenciesList, string[] directDependencies, bool recursive)
+        {
+            //UnityEngine.Debug.LogError("GetEntryDependencies start： " + DateTime.Now.ToString());
+            foreach (var path in directDependencies)
+            {
+                if (dependenciesList.Contains(path))
+                {
+                    continue;
+                }
+
+                dependenciesList.Add(path);
+
+                Object asset = AssetDatabase.LoadAssetAtPath<Object>(path);
+                if (asset == null)
+                {
+                    Debug.LogError("GetEntryDependencies failed when load asset at path: " + path);
+                    continue;
+                }
+                //UnityEngine.Debug.LogError("GetEntryDependencies path： " + path);
+                var prefabType = PrefabUtility.GetPrefabAssetType(asset);
                 if (prefabType == PrefabAssetType.Regular || prefabType == PrefabAssetType.Variant)
                 {
                     var indirectDps = AddressableCache.GetVariantDependencies(path, recursive);

@@ -1,4 +1,5 @@
 ﻿using System;
+using UnityEditor.AddressableAssets.Settings.GroupSchemas;
 
 namespace AddressableAssetTool.Graph
 {
@@ -6,12 +7,23 @@ namespace AddressableAssetTool.Graph
     {
         internal static BaseNodeCreator GetCreator(AddressableAssetRule asset)
         {
-            if (asset.PackModel == PackMode.PackTogether)
+            //if (asset.PackModel == PackMode.PackTogether)
+            //{
+            //    return new PackTogetherNodeCreator(asset);
+            //}
+            //else
+            //    return new PackSeparateNodeCreator(asset);
+
+
+            if (asset.PackModel == BundledAssetGroupSchema.BundlePackingMode.PackTogether)
             {
-                return new PackTogetherNodeCreator(asset);
+
+                return new NewPackTogetherNodeCreator(asset);
             }
             else
-                return new PackSeparateNodeCreator(asset);
+            {
+                return new NewPackSeparateNodeCreator(asset);
+            }
         }
     }
 }

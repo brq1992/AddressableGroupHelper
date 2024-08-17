@@ -2,80 +2,82 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using AddressableAssetTool;
 using System.Linq;
 
-public class ResourceGraphBuilder
+namespace AddressableAssetTool.Graph
 {
-    private ResourceGraph resourceGraph;
-
-    public ResourceGraphBuilder()
+    public class ResourceGraphBuilder
     {
-        resourceGraph = new ResourceGraph();
-    }
+        private ResourceGraph resourceGraph;
 
-    public void BuildGraph()
-    {
-        string[] assetPaths = AssetDatabase.GetAllAssetPaths();
-        var resourceData = new List<(string guid, List<string> dependencyGuids)>();
-
-        foreach (string path in assetPaths)
+        public ResourceGraphBuilder()
         {
-            if (!string.IsNullOrEmpty(path) && path.StartsWith("Assets/Test") && !AddressabelUtilities.IsAFolder(path))
-            {
-                string guid = AssetDatabase.AssetPathToGUID(path);
-                Object asset = AssetDatabase.LoadAssetAtPath<Object>(path);
-                if (asset == null)
-                {
-                    Debug.LogError("load asset failed " + path);
-                    continue;
-                }
-                var prefabType = PrefabUtility.GetPrefabAssetType(asset);
-
-                bool recursive = false;
-                List<string> dependenciesList = new List<string>();
-                if (prefabType == PrefabAssetType.Regular || prefabType == PrefabAssetType.Variant)
-                {
-                    var indirectDps = AddressableCache.GetVariantDependencies(path, recursive);
-                    dependenciesList = indirectDps.ToList();
-                }
-                else
-                {
-                    var indirectDps = AddressableCache.GetDependencies(path, recursive);
-                    dependenciesList = indirectDps.ToList();
-                }
-
-                var dependencyGuids = new List<string>();
-                foreach (string dependency in dependenciesList)
-                {
-                    if (!string.IsNullOrEmpty(dependency) && !dependency.StartsWith("Packages/") && !dependency.StartsWith("Assets/Editor"))
-                    {
-                        string dependencyGuid = AssetDatabase.AssetPathToGUID(dependency);
-                        dependencyGuids.Add(dependencyGuid);
-                    }
-                }
-                resourceData.Add((guid, dependencyGuids));
-
-                resourceGraph.GetOrCreateNode(guid);
-            }
+            resourceGraph = new ResourceGraph();
         }
 
-        //Parallel.ForEach(resourceData, data =>
-        //{
-        //    resourceGraph.GetOrCreateNode(data.guid);
-        //});
-
-        Parallel.ForEach(resourceData, data =>
+        public void BuildGraph()
         {
-            foreach (string dependencyGuid in data.dependencyGuids)
-            {
-                resourceGraph.AddReference(data.guid, dependencyGuid);
-            }
-        });
-    }
+            string[] assetPaths = AssetDatabase.GetAllAssetPaths();
+            var resourceData = new List<(string guid, List<string> dependencyGuids)>();
 
-    public ResourceGraph GetResourceGraph()
-    {
-        return resourceGraph;
+            foreach (string path in assetPaths)
+            {
+                if (!string.IsNullOrEmpty(path) && (path.StartsWith("Assets/Addressables/MainUI") || path.StartsWith("Assets/Art")))
+                {
+                    string guid = AssetDatabase.AssetPathToGUID(path);
+                    Object asset = AssetDatabase.LoadAssetAtPath<Object>(path);
+                    if (asset == null)
+                    {
+                        Debug.LogError("load asset failed " + path);
+                        continue;
+                    }
+                    var prefabType = PrefabUtility.GetPrefabAssetType(asset);
+
+                    bool recursive = false;
+                    List<string> dependenciesList = new List<string>();
+                    if (prefabType == PrefabAssetType.Regular || prefabType == PrefabAssetType.Variant)
+                    {
+                        var indirectDps = AddressableCache.GetVariantDependencies(path, recursive);
+                        dependenciesList = indirectDps.ToList();
+                    }
+                    else
+                    {
+                        var indirectDps = AddressableCache.GetDependencies(path, recursive);
+                        dependenciesList = indirectDps.ToList();
+                    }
+
+                    var dependencyGuids = new List<string>();
+                    foreach (string dependency in dependenciesList)
+                    {
+                        if (!string.IsNullOrEmpty(dependency) && !dependency.StartsWith("Packages/") && !dependency.StartsWith("Assets/Editor"))
+                        {
+                            string dependencyGuid = AssetDatabase.AssetPathToGUID(dependency);
+                            dependencyGuids.Add(dependencyGuid);
+                        }
+                    }
+                    resourceData.Add((guid, dependencyGuids));
+
+                    resourceGraph.GetOrCreateNode(guid);
+                }
+            }
+
+            //Parallel.ForEach(resourceData, data =>
+            //{
+            //    resourceGraph.GetOrCreateNode(data.guid);
+            //});
+
+            Parallel.ForEach(resourceData, data =>
+            {
+                foreach (string dependencyGuid in data.dependencyGuids)
+                {
+                    resourceGraph.AddReference(data.guid, dependencyGuid);
+                }
+            });
+        }
+
+        public ResourceGraph GetResourceGraph()
+        {
+            return resourceGraph;
+        }
     }
 }

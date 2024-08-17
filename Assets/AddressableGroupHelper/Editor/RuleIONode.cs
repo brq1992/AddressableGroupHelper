@@ -74,18 +74,12 @@ namespace com.igg.editor
         internal void DrawGUI()
         {
             //_foldout = EditorGUILayout.Foldout(_foldout, Name);
-
-
             //foreach (var item in _rules)
             //{
             //    EditorGUILayout.BeginHorizontal();
-
-
             //    EditorGUILayout.LabelField(item.name);
-
             //    bool value = EditorGUILayout.Toggle(item.IsRuleUsed);
             //    item.IsRuleUsed = value;
-
             //    EditorGUILayout.EndHorizontal();
             //}
 
@@ -125,6 +119,24 @@ namespace com.igg.editor
 
 
 
+        }
+
+        internal void ChangeValue(bool value)
+        {
+            foreach (var item in _childDic)
+            {
+                item.Value.ChangeValue(value);
+            }
+
+            foreach (var item in _rules)
+            {
+                if (value != item.IsRuleUsed)
+                {
+                    EditorUtility.SetDirty(item);
+                }
+                item.IsRuleUsed = value;
+
+            }
         }
     }
 }

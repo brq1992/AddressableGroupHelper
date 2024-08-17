@@ -19,17 +19,125 @@ namespace AddressableAssetTool.Graph
         private GraphView m_GraphView;
         private readonly List<Object> SelectedObjects = new List<Object>();
         internal readonly List<GraphBaseGroup> _addressableGroups = new List<GraphBaseGroup>();
-        private readonly List<Group> _groups = new List<Group>();
+        private readonly List<Node> _groups = new List<Node>();
 
         private const float kNodeWidth = 250.0f;
         private Toggle AlignmentToggle;
         private VisualElement _infoWindow;
 
-        [MenuItem("Tools/AddressableAssetManager/Dependency Graph")]
-        public static void CreateTestGraphViewWindow()
+        [MenuItem("Tools/AddressableAssetManager/Preparing Dependency Graph Data")]
+        public static void CreateAddressableDependenciesGraphWindowWithData()
+        {
+            CreateGraph(null);
+        }
+
+        [MenuItem("Tools/AddressableAssetManager/Open Dependency Graph Window")]
+        public static void CreateAddressableDependenciesGraphWindowWithoutData()
         {
             var window = GetWindow<AddressableDependenciesGraph>();
-            window.titleContent = new GUIContent("Addressable Dependency Graph");
+            window.titleContent = new GUIContent("Addressable Dependency Graph Without Preparing All data");
+        }
+
+        [MenuItem("Tools/AddressableAssetManager/CheckReference")]
+        public static void CheckReference()
+        {
+            CreateGraph(CalculateCircularReference);
+        }
+
+        private static void CreateGraph(Action action)
+        {
+            if(!BaseNodeCreator.NewNodeInit)
+            {
+                BaseNodeCreator.NewNodeInit = true;
+                //Debug.LogError("Change to search whole project!");
+                var getAssetRuleGuids = AddressabelUtilities.GetAssetRuleGuidsInFolder("Assets");
+
+                BaseNodeCreator.ClearABGraphData();
+                AddressableCache.CacheClear();
+
+                int totalCount = getAssetRuleGuids.Length;
+                float currentCount = 0;
+                try
+                {
+                    foreach (var guid in getAssetRuleGuids)
+                    {
+                        var assetPath = AssetDatabase.GUIDToAssetPath(guid);
+                        var asset = AssetDatabase.LoadAssetAtPath<AddressableAssetRule>(assetPath);
+                        if (asset != null && asset.IsRuleUsed)
+                        {
+                            var baseNodeCreator = GroupNodeCreatorFactory.GetCreator(asset);
+                            baseNodeCreator.CreateNode(guid, null);
+                            currentCount++;
+                            EditorUtility.DisplayProgressBar("Addressable Dependencies Graph", "Caculating Asset Dependencies, please wait...", currentCount / totalCount);
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError(e.ToString());
+                }
+            }
+
+            action?.Invoke();
+
+            EditorUtility.ClearProgressBar();
+        }
+
+        private static void CalculateCircularReference()
+        {
+            var circularReferences = BaseNodeCreator.ABResourceGraph.GetAllCircularReferences();
+            Debug.LogError("Circular References:");
+            foreach (var circularPath in circularReferences)
+            {
+                StringBuilder builder = new StringBuilder();
+                foreach (var guid in circularPath)
+                {
+                    builder.Append(AssetDatabase.GUIDToAssetPath(guid) + " -> ");
+                }
+                Debug.LogError(builder.ToString());
+            }
+        }
+
+        [MenuItem("Tools/AddressableAssetManager/CheckReferenceDepth")]
+        public static void CheckReferenceDepth()
+        {
+            CreateGraph(CalculateDepth);
+        }
+
+        private static void CalculateDepth()
+        {
+            IEnumerable<ResourceNode> nodes = BaseNodeCreator.ABResourceGraph.GetAllNodes();
+            foreach (var node in nodes)
+            {
+                List<string> paths = new List<string>();
+                int depth = BaseNodeCreator.ABResourceGraph.GetReferenceDepth(node.ResourceId, out paths);
+                string output = string.Join("-> ", paths);
+                if (depth > 3)
+                {
+                    Debug.LogError($"Resource {AssetDatabase.GUIDToAssetPath(node.ResourceId)} depth: {--depth} paths {output}");
+                }
+            }
+        }
+
+        [MenuItem("Tools/AddressableAssetManager/ClearReferenceData")]
+        private static void ClearReferenceData()
+        {
+            BaseNodeCreator.NewNodeInit = false;
+            BaseNodeCreator.ClearABGraphData();
+            AddressableCache.CacheClear();
+        }
+
+
+        public static void CheckCommonFeatureReference()
+        {
+            CreateGraph(CalculateCommonReference);
+        }
+
+        private static void CalculateCommonReference()
+        {
+            var commonPath = "";
+
+
         }
 
         public void OnEnable()
@@ -41,10 +149,11 @@ namespace AddressableAssetTool.Graph
                 return;
             }
 
+            return;
+
             EditorUtility.DisplayProgressBar("Addressable Dependencies Graph", "Caculating Asset Dependencies, please wait...", 0);
 
-            BaseNodeCreator.graph.Clear();
-            AddressableCache.CacheClear();
+            //BaseNodeCreator.graph.Clear();
 
             var getAssetRuleGuids = AddressabelUtilities.GetAssetRuleGuidsInFolder(AddressaableToolKey.RuleSearchPath);
 
@@ -237,7 +346,7 @@ namespace AddressableAssetTool.Graph
                     return;
                 }
 
-                var adGroup = AddressableBaseGroupFactory.GetGroup(obj, this);// new AddressableBaseGroup();
+                var adGroup = AddressableBaseGroupFactory.GetGroup(obj, this, BaseNodeCreator.NewNodeInit);// new AddressableBaseGroup();
                 _addressableGroups.Add(adGroup);
 
                 //adGroup._assetRulePath = objPath;
@@ -316,7 +425,7 @@ namespace AddressableAssetTool.Graph
                 return;
             }
 
-            var adGroup = AddressableBaseGroupFactory.GetGroup(obj, this);// new AddressableBaseGroup();
+            var adGroup = AddressableBaseGroupFactory.GetGroup(obj, this, BaseNodeCreator.NewNodeInit);// new AddressableBaseGroup();
             _addressableGroups.Add(adGroup);
 
             //adGroup._assetRulePath = objPath;
@@ -909,7 +1018,14 @@ namespace AddressableAssetTool.Graph
 
         #endregion
 
-        internal void AddAndPosGroupNode(Group groupNode)
+        //internal void AddAndPosGroupNode(Group groupNode)
+        //{
+        //    Rect pos = BaseLayout.GetNewGroupNodePosition(_groups);
+        //    groupNode.SetPosition(pos);
+        //    _groups.Add(groupNode);
+        //}
+
+        internal void AddAndPosMainNode(Node groupNode)
         {
             Rect pos = BaseLayout.GetNewGroupNodePosition(_groups);
             groupNode.SetPosition(pos);
