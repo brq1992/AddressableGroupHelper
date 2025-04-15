@@ -16,12 +16,7 @@ MonoBehaviour:
   m_Data:
     m_SerializedData: []
   m_GUID: 12a74d123fcc6564ea72efcfeec1214c
-  m_SerializeEntries:
-  - m_GUID: 823b02688fe30f04dbf1c19d564cb4e9
-    m_Address: Assets/LowPolyRPGWeapons_Lite/Total
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
+  m_SerializeEntries: []
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 29aea2a8e68d813498ccf6c7f964d864, type: 2}
   m_SchemaSet:

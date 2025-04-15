@@ -1,4 +1,4 @@
-
+﻿
 using System;
 using System.Collections;
 using UnityEngine;
@@ -19,20 +19,69 @@ public class TestLoadPlane : MonoBehaviour
 
     public void LoadFighter()
     {
-        Debug.LogError("LoadFighter");
+        //Debug.LogError("LoadFighter");
         StartCoroutine(StarLoadFighter());
+        //LoadResource("Assets/ikrambandagi/Prefabs/Plane1.prefab");
 
+    }
+
+    public async void LoadResource(string key)
+    {
+        System.Collections.Generic.IList<UnityEngine.ResourceManagement.ResourceLocations.IResourceLocation> locations = await Addressables.LoadResourceLocationsAsync(key).Task;
+
+        var a = Addressables.LoadResourceLocations(key); //Debug.LogError(a.DebugName);
+        if (a.Status == AsyncOperationStatus.Succeeded)
+        {
+            foreach (var loc in a.Result)
+            {
+                Debug.Log($"Dependency TransformInternalId: {Addressables.ResourceManager.TransformInternalId(loc)}");
+                // loc 是 IResourceLocation
+                // loc.Dependencies 里可能包含对应的 AB 的 location
+                foreach (var dep in loc.Dependencies)
+                {
+                    // dep.InternalId 通常包含对应 AB 的路径信息
+                    Debug.Log($"Dependency InternalId: {dep.InternalId}");
+                   
+                }
+            }
+        }
+
+        if (locations.Count > 0)
+        {
+            foreach (var location in locations)
+            {
+                string bundleName = location.InternalId;
+                Debug.Log($"[Addressables Monitor] Resource '{key}' belongs to AssetBundle '{bundleName}'");
+            }
+        }
+
+        Addressables.LoadAssetAsync<GameObject>(key).Completed += SAA;
+    }
+
+    private void SAA(AsyncOperationHandle<GameObject> handle)
+    {
+        if (handle.Status == AsyncOperationStatus.Succeeded)
+        {
+            GameObject obj = handle.Result;
+            _plane = Instantiate(obj, PlaneRoot);
+            //GameObject.Instantiate(_plane.GetComponent<TestRefer>().Plane);
+        }
+        else
+        {
+            Debug.LogError("LoadFighter Failed!");
+        }
     }
 
     private IEnumerator StarLoadFighter()
     {
-        fighterHandle = Addressables.LoadAssetAsync<GameObject>(FighterKey);
+        fighterHandle = Addressables.LoadAsset<GameObject>(FighterKey);
         yield return fighterHandle;
 
         if (fighterHandle.Status == AsyncOperationStatus.Succeeded)
         {
             GameObject obj = fighterHandle.Result;
             _plane = Instantiate(obj, PlaneRoot);
+            //GameObject.Instantiate(_plane.GetComponent<TestRefer>().Plane);
         }
         else
         {
@@ -59,6 +108,7 @@ public class TestLoadPlane : MonoBehaviour
         Debug.LogError("ReleaseBigPlane");
         GameObject.Destroy(_bigplane);
         Addressables.Release(bigPlaneHandle);
+        //Addressables.LoadResourceLocationsAsync
     }
 
     private IEnumerator StarBigPlane()

@@ -84,20 +84,20 @@ namespace AddressableAssetTool
 
         static void GetDependenciesAndAddNoes(string assetPath, Node<Object> rootNode)
         {
-            var directDependencies = AddressableCache.GetDependencies(assetPath, false);
-            foreach (var path in directDependencies)
-            {
-                //Debug.LogError("child path " + path);
-                var directAssetObject = AssetDatabase.LoadAssetAtPath<Object>(path);
-                var assetId = directAssetObject.GetInstanceID();
-                var directDependencyNode = _graph.AddNode(assetId, directAssetObject);
-                _graph.AddEdge(rootNode.Id, directDependencyNode.Id);
-                //Debug.LogError("assetId "+ assetId);
+            //var directDependencies = AddressableCache.GetDependencies(assetPath, false);
+            //foreach (var path in directDependencies)
+            //{
+            //    //Debug.LogError("child path " + path);
+            //    var directAssetObject = AssetDatabase.LoadAssetAtPath<Object>(path);
+            //    var assetId = directAssetObject.GetInstanceID();
+            //    var directDependencyNode = _graph.AddNode(assetId, directAssetObject);
+            //    _graph.AddEdge(rootNode.Id, directDependencyNode.Id);
+            //    //Debug.LogError("assetId "+ assetId);
 
-                //get child
-                GetDependenciesAndAddNoes(path, directDependencyNode);
+            //    //get child
+            //    GetDependenciesAndAddNoes(path, directDependencyNode);
 
-            }
+            //}
         }
     }
 }

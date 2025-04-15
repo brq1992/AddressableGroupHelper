@@ -17,10 +17,11 @@ MonoBehaviour:
     m_SerializedData: []
   m_GUID: 7133b9a96f1700346b2641c5b5699ce1
   m_SerializeEntries:
-  - m_GUID: de77bdf4b6469834db926a41e2b80c38
-    m_Address: Assets/ikrambandagi/Prefabs
+  - m_GUID: 978e0cbd098d60d4896df3569adbb0c9
+    m_Address: Assets/ikrambandagi/Prefabs/FighterJet1.prefab
     m_ReadOnly: 0
-    m_SerializedLabels: []
+    m_SerializedLabels:
+    - RustPlane
     FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 29aea2a8e68d813498ccf6c7f964d864, type: 2}
