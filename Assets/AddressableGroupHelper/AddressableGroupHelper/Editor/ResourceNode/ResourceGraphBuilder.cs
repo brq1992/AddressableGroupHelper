@@ -28,7 +28,7 @@ namespace AddressableAssetTool.Graph
                     Object asset = AssetDatabase.LoadAssetAtPath<Object>(path);
                     if (asset == null)
                     {
-                        Debug.LogError("load asset failed " + path);
+                        com.igg.core.IGGDebug.LogError("load asset failed " + path);
                         continue;
                     }
                     var prefabType = PrefabUtility.GetPrefabAssetType(asset);

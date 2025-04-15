@@ -1,10 +1,11 @@
 ﻿
 
-using com.igg.editor;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using UnityEditor;
 using UnityEditor.AddressableAssets.Settings.GroupSchemas;
+using UnityEditor.Build.Pipeline;
 
 namespace AddressableAssetTool.Graph
 {
@@ -20,7 +21,7 @@ namespace AddressableAssetTool.Graph
 
         protected AddressableDependenciesGraph _window;
 
-        internal abstract void CreateNode(string assetGUID, AddressableDependenciesGraph addressableDependenciesGraph);
+        internal abstract void CreateNode(string assetGUID, AddressableDependenciesGraph addressableDependenciesGraph, BundleBuildResults result);
 
         internal virtual void CreateDependencyNodes(string[] dependencies, string guid, DirectedGraph.Node parentNode)
         {
@@ -36,7 +37,7 @@ namespace AddressableAssetTool.Graph
                     }
 
                     AddressableAssetRule rule = item.Value.Rule;
-                    if (rule != null && DGTool.HasConnect(dependencyString, rule, out NodeDepenData[] data))// rule.HasConnenct(dependencyString, out isDependence, out edgeUserData))
+                    if (rule != null && DGTool.HasConnect(dependencyString, rule, out NodeDepenData[] data, () => GetName(rule), () => IsMultiNode(rule)))// rule.HasConnenct(dependencyString, out isDependence, out edgeUserData))
                     {
                         string path = AssetDatabase.GetAssetPath(rule);
                         string assetRuleGuid = AssetDatabase.AssetPathToGUID(path);
@@ -67,6 +68,16 @@ namespace AddressableAssetTool.Graph
             }
         }
 
+        protected virtual bool IsMultiNode(AddressableAssetRule rule)
+        {
+            return rule.PackModel == BundledAssetGroupSchema.BundlePackingMode.PackSeparately;
+        }
+
+        protected virtual string GetName(AddressableAssetRule rule)
+        {
+            return rule.name;
+        }
+
 
 
 
@@ -76,6 +87,7 @@ namespace AddressableAssetTool.Graph
         internal static bool NewNodeInit = false;
 
         internal static ResourceGraph ABResourceGraph = new ResourceGraph();
+
         internal static void ClearABGraphData()
         {
             NewNodeInit = false;

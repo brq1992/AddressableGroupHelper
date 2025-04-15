@@ -45,7 +45,7 @@ namespace AddressableAssetTool
 
         internal int GetUniqueCount()
         {
-            //UnityEngine.Debug.LogError("uniqueCount " + uniqueCount);
+            //com.igg.core.IGGDebug.LogError("uniqueCount " + uniqueCount);
             return uniqueCount;
         }
     }

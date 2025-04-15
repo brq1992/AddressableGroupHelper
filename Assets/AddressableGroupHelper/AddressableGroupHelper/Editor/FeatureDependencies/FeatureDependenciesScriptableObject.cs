@@ -43,7 +43,7 @@ namespace com.igg.editor
             string[] directorys = unifiedPath.Split("/");
 
             StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.Append("FeatureDependenciesLabel-");
+            stringBuilder.Append("FeatDepsLabel-");
             for (int i = 2; i < directorys.Length; i++)
             {
                 if (i > 2)
@@ -55,9 +55,9 @@ namespace com.igg.editor
             stringBuilder.Append(".asset");
             string assetName = stringBuilder.ToString();
             string assetPath = Path.Combine(unifiedPath, assetName);
-            //Debug.LogError("assetPath "+ assetPath);
+            //IGGDebug.LogError("assetPath "+ assetPath);
             string newRuleFileName = AssetDatabase.GenerateUniqueAssetPath(assetPath);
-            //Debug.LogError("newRuleFileName " +newRuleFileName);
+            //IGGDebug.LogError("newRuleFileName " +newRuleFileName);
             //newRuleFileName = newRuleFileName.Replace("\\", "/");
             AssetDatabase.CreateAsset(newRule, newRuleFileName);
             AssetDatabase.SaveAssets();

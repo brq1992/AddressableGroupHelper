@@ -1,6 +1,6 @@
-﻿
-using AddressableAssetTool;
+﻿using AddressableAssetTool;
 using AddressableAssetTool.Graph;
+using com.igg.ui;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -20,12 +20,12 @@ namespace com.igg.editor
         {
             string folderPath = AssetDatabase.GetAssetPath(Selection.activeObject);
             //var dependencies = AssetDatabase.GetDependencies(folderPath, true);
-            //Debug.LogError(string.Join("--", dependencies));
+            //IGGDebug.LogError(string.Join("--", dependencies));
             //return;
 
             if (string.IsNullOrEmpty(folderPath) || !Directory.Exists(folderPath))
             {
-                Debug.LogError("Invalid folder path.");
+                com.igg.core.IGGDebug.LogError("Invalid folder path.");
                 return;
             }
 
@@ -34,7 +34,7 @@ namespace com.igg.editor
             foreach (var guid in guids)
             {
                 var dependencies = AssetDatabase.GetDependencies(AssetDatabase.GUIDToAssetPath(guid), true);
-                Debug.LogError(string.Join("--", dependencies));
+                com.igg.core.IGGDebug.LogError(string.Join("--", dependencies));
             }
 
         }
@@ -57,12 +57,12 @@ namespace com.igg.editor
             {
                 foreach (GameObject go in referencingObjects)
                 {
-                    Debug.Log($"- {go.name} (Path: {GetGameObjectPath(go)})");
+                    com.igg.core.IGGDebug.Log($"- {go.name} (Path: {GetGameObjectPath(go)})");
                 }
             }
             else
             {
-                Debug.LogError($"no game object");
+                com.igg.core.IGGDebug.LogError($"no game object");
             }
         }
 
@@ -73,7 +73,7 @@ namespace com.igg.editor
             if (spriteRenderer != null)
             {
                 //referencingObjects.Add(obj);
-                Debug.Log($"- {obj.name} (Path: {GetGameObjectPath(obj)})" + spriteRenderer.sprite.name);
+                com.igg.core.IGGDebug.Log($"- {obj.name} (Path: {GetGameObjectPath(obj)})" + spriteRenderer.sprite.name);
 
             }
 
@@ -83,7 +83,7 @@ namespace com.igg.editor
             {
                 string spriteName = uiImage.sprite == null ? "null" : uiImage.sprite.name;
                 //referencingObjects.Add(obj);
-                Debug.Log($"- {obj.name} (Path: {GetGameObjectPath(obj)})" + spriteName);
+                com.igg.core.IGGDebug.Log($"- {obj.name} (Path: {GetGameObjectPath(obj)})" + spriteName);
             }
 
             // Recursively check all children
@@ -94,7 +94,7 @@ namespace com.igg.editor
         }
 
         // Helper method to get the full path of a GameObject in the hierarchy
-        private static string GetGameObjectPath(GameObject obj)
+        public static string GetGameObjectPath(GameObject obj)
         {
             string path = "/" + obj.name;
             while (obj.transform.parent != null)
@@ -123,7 +123,7 @@ namespace com.igg.editor
 
             if (string.IsNullOrEmpty(folderPath) || !Directory.Exists(folderPath))
             {
-                Debug.LogError("Invalid folder path.");
+                com.igg.core.IGGDebug.LogError("Invalid folder path.");
                 return;
             }
 
@@ -151,7 +151,7 @@ namespace com.igg.editor
                                     {
                                         if (!dependency.Contains("Common"))
                                         {
-                                            Debug.LogError(entry.Key.AssetPath + " --> " + dependency);
+                                            com.igg.core.IGGDebug.LogError(entry.Key.AssetPath + " --> " + dependency);
                                         }
                                     }
                                 }
@@ -163,7 +163,7 @@ namespace com.igg.editor
             }
             catch (Exception e)
             {
-                Debug.LogError(e.ToString());
+                com.igg.core.IGGDebug.LogError(e.ToString());
             }
         }
 
@@ -209,21 +209,21 @@ namespace com.igg.editor
                                         if (PrefabHasReference<Image, Sprite>(asset as GameObject, dependenceAsset, out var referImage))
                                         {
                                             string referGameObjectPath = GetGameObjectPath(referImage.gameObject);
-                                            Debug.LogError(assetPath + " --> " + dependency + " Path: " + referGameObjectPath);
+                                            com.igg.core.IGGDebug.LogError(assetPath + " --> " + dependency + " Path: " + referGameObjectPath);
                                         }
-                                        //else if (PrefabHasReference<UIGeneralWindowConfig, Sprite>(asset as GameObject, dependenceAsset, out var referWindow))
-                                        //{
-                                        //    string referGameObjectPath = GetGameObjectPath(referWindow.gameObject);
-                                        //    Debug.LogError(assetPath + " --> " + dependency + " Path: " + referGameObjectPath);
-                                        //}
-                                        //else if (PrefabHasReference<UIGeneralWidgetConfig, Sprite>(asset as GameObject, dependenceAsset, out var referWidget))
-                                        //{
-                                        //    string referGameObjectPath = GetGameObjectPath(referWidget.gameObject);
-                                        //    Debug.LogError(assetPath + " --> " + dependency + " Path: " + referGameObjectPath);
-                                        //}
+                                        else if (PrefabHasReference<UIGeneralWindowConfig, Sprite>(asset as GameObject, dependenceAsset, out var referWindow))
+                                        {
+                                            string referGameObjectPath = GetGameObjectPath(referWindow.gameObject);
+                                            com.igg.core.IGGDebug.LogError(assetPath + " --> " + dependency + " Path: " + referGameObjectPath);
+                                        }
+                                        else if (PrefabHasReference<UIGeneralWidgetConfig, Sprite>(asset as GameObject, dependenceAsset, out var referWidget))
+                                        {
+                                            string referGameObjectPath = GetGameObjectPath(referWidget.gameObject);
+                                            com.igg.core.IGGDebug.LogError(assetPath + " --> " + dependency + " Path: " + referGameObjectPath);
+                                        }
                                         else
                                         {
-                                            Debug.LogError(assetPath + " <--> " + dependency);
+                                            com.igg.core.IGGDebug.LogError(assetPath + " <--> " + dependency);
                                         }
                                     }
 
@@ -233,21 +233,21 @@ namespace com.igg.editor
                                         if (PrefabHasReference<Image, SpriteAtlas>(asset as GameObject, dependenceAsset, out var referImage))
                                         {
                                             string referGameObjectPath = GetGameObjectPath(referImage.gameObject);
-                                            Debug.LogError(assetPath + " --> " + dependency + " Path: " + referGameObjectPath);
+                                            com.igg.core.IGGDebug.LogError(assetPath + " --> " + dependency + " Path: " + referGameObjectPath);
                                         }
-                                        //else if (PrefabHasReference<UIGeneralWindowConfig, SpriteAtlas>(asset as GameObject, dependenceAsset, out var referWindow))
-                                        //{
-                                        //    string referGameObjectPath = GetGameObjectPath(referWindow.gameObject);
-                                        //    Debug.LogError(assetPath + " --> " + dependency + " Path: " + referGameObjectPath);
-                                        //}
-                                        //else if (PrefabHasReference<UIGeneralWidgetConfig, SpriteAtlas>(asset as GameObject, dependenceAsset, out var referWidget))
-                                        //{
-                                        //    string referGameObjectPath = GetGameObjectPath(referWidget.gameObject);
-                                        //    Debug.LogError(assetPath + " --> " + dependency + " Path: " + referGameObjectPath);
-                                        //}
+                                        else if (PrefabHasReference<UIGeneralWindowConfig, SpriteAtlas>(asset as GameObject, dependenceAsset, out var referWindow))
+                                        {
+                                            string referGameObjectPath = GetGameObjectPath(referWindow.gameObject);
+                                            com.igg.core.IGGDebug.LogError(assetPath + " --> " + dependency + " Path: " + referGameObjectPath);
+                                        }
+                                        else if (PrefabHasReference<UIGeneralWidgetConfig, SpriteAtlas>(asset as GameObject, dependenceAsset, out var referWidget))
+                                        {
+                                            string referGameObjectPath = GetGameObjectPath(referWidget.gameObject);
+                                            com.igg.core.IGGDebug.LogError(assetPath + " --> " + dependency + " Path: " + referGameObjectPath);
+                                        }
                                         else
                                         {
-                                            Debug.LogError(assetPath + " <--> " + dependency);
+                                            com.igg.core.IGGDebug.LogError(assetPath + " <--> " + dependency);
                                         }
                                     }
 
@@ -260,7 +260,7 @@ namespace com.igg.editor
             }
             catch (Exception e)
             {
-                Debug.LogError(e.ToString());
+                com.igg.core.IGGDebug.LogError(e.ToString());
             }
         }
 
@@ -270,7 +270,7 @@ namespace com.igg.editor
 
             if (string.IsNullOrEmpty(folderPath) || !Directory.Exists(folderPath))
             {
-                Debug.LogError("Invalid folder path.");
+                com.igg.core.IGGDebug.LogError("Invalid folder path.");
                 return null;
             }
 
@@ -280,7 +280,7 @@ namespace com.igg.editor
             return rulesGUID;
         }
 
-        static bool PrefabHasReference<T, K>(GameObject prefab, K target, out Transform referComponent) where T : Component where K : Object 
+        public static bool PrefabHasReference<T, K>(GameObject prefab, K target, out Transform referComponent) where T : Component where K : Object 
         {
             referComponent = null;
             T[] components = prefab.GetComponentsInChildren<T>(true);
@@ -354,11 +354,11 @@ namespace com.igg.editor
                                 var uiAsset = AssetDatabase.LoadAssetAtPath<Texture2D>(dependency);
                                 if(uiAsset != null && (uiAsset.width * uiAsset.height >= dimenssion))
                                 {
-                                    Debug.LogError(assetPath + " <--> " + dependency);
+                                    com.igg.core.IGGDebug.LogError(assetPath + " <--> " + dependency);
                                 }
                                 //else
                                 //{
-                                //    Debug.LogError("Load Texture2D failed " + dependency);
+                                //    com.igg.core.IGGDebug.LogError("Load Texture2D failed " + dependency);
                                 //}
 
                             }
@@ -368,7 +368,7 @@ namespace com.igg.editor
             }
             catch (Exception e)
             {
-                Debug.LogError(e.ToString());
+                com.igg.core.IGGDebug.LogError(e.ToString());
             }
         }
 
@@ -381,7 +381,7 @@ namespace com.igg.editor
             Object selectedObject = Selection.activeObject;
             if (selectedObject == null || !(selectedObject is Sprite))
             {
-                Debug.LogError("Please select a sprite!");
+                com.igg.core.IGGDebug.LogError("Please select a sprite!");
                 return;
             }
 
@@ -402,7 +402,7 @@ namespace com.igg.editor
             AssetDatabase.MoveAsset(spritePath, targetPath);
             AssetDatabase.Refresh();
 
-            Debug.Log($"Move Sprite to：{targetPath}");
+            com.igg.core.IGGDebug.Log($"Move Sprite to：{targetPath}");
 
         }
 
@@ -413,7 +413,7 @@ namespace com.igg.editor
 
             if (string.IsNullOrEmpty(folderPath) || !Directory.Exists(folderPath))
             {
-                Debug.LogError("Invalid folder path.");
+                com.igg.core.IGGDebug.LogError("Invalid folder path.");
                 return;
             }
             string folderName = Path.GetFileName(folderPath);
@@ -422,11 +422,11 @@ namespace com.igg.editor
 
             string targetPath = Path.Combine("Assets/Art/UI/UICommon/", folderName);
 
-            //Debug.Log($"Move Sprite to：{targetPath}");
+            //IGGDebug.Log($"Move Sprite to：{targetPath}");
             AssetDatabase.MoveAsset(folderPath, targetPath);
             AssetDatabase.Refresh();
 
-            Debug.Log($"Move Sprite to：{targetPath}");
+            com.igg.core.IGGDebug.Log($"Move Sprite to：{targetPath}");
 
         }
 
@@ -437,7 +437,7 @@ namespace com.igg.editor
 
             if (string.IsNullOrEmpty(folderPath) || !Directory.Exists(folderPath))
             {
-                Debug.LogError("Invalid folder path.");
+                com.igg.core.IGGDebug.LogError("Invalid folder path.");
                 return;
             }
 
@@ -451,11 +451,11 @@ namespace com.igg.editor
                 Directory.CreateDirectory(parentDic);
             }
 
-            //Debug.Log($"Move Sprite to：{targetPath}");
+            //IGGDebug.Log($"Move Sprite to：{targetPath}");
             AssetDatabase.MoveAsset(folderPath, targetPath);
             AssetDatabase.Refresh();
 
-            Debug.Log($"Move Folder to：{targetPath}");
+            com.igg.core.IGGDebug.Log($"Move Folder to：{targetPath}");
 
         }
 

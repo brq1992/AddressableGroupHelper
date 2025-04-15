@@ -6,6 +6,7 @@ using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings;
 using UnityEditor.AddressableAssets.Settings.GroupSchemas;
 using UnityEngine;
+using UnityEngine.UIElements;
 using static UnityEditor.AddressableAssets.Settings.GroupSchemas.BundledAssetGroupSchema;
 
 
@@ -15,9 +16,15 @@ namespace AddressableAssetTool
 
     public class AddressableAssetRule : ScriptableObject
     {
+        public enum CompressionMode
+        {
+            Compressed, 
+            Uncompressed
+        }
+
         public BundledAssetGroupSchema.BundlePackingMode PackModel;
         public bool IsRuleUsed = true;
-        public BundledAssetGroupSchema.BundleCompressionMode BundleCompressionMode = BundledAssetGroupSchema.BundleCompressionMode.Uncompressed;
+        public CompressionMode BundleCompressionMode = CompressionMode.Compressed;
         public string Lable = string.Empty;
         internal string _gruopName;
 
@@ -31,7 +38,7 @@ namespace AddressableAssetTool
             IsRuleUsed = true;
             AddEntryByFolder = false;
             PackModel = BundledAssetGroupSchema.BundlePackingMode.PackTogether;
-            BundleCompressionMode = BundleCompressionMode.Uncompressed;
+            BundleCompressionMode = CompressionMode.Compressed;
             Lable = string.Empty;
             var addressableAssetProfileSettings = AddressableAssetSettingsDefaultObject.Settings;
             if (addressableAssetProfileSettings == null)
@@ -69,11 +76,11 @@ namespace AddressableAssetTool
             isDependence = false;
             var addressableAssetProfileSettings = AddressableAssetSettingsDefaultObject.Settings;
             var group = addressableAssetProfileSettings.FindGroup(this.name);
-            if(group != null)
+            if (group != null)
             {
-                foreach(var item in group.entries)
+                foreach (var item in group.entries)
                 {
-                    if(dependencyString.Equals(item.AssetPath))
+                    if (dependencyString.Equals(item.AssetPath))
                     {
                         connnect = true;
                         isDependence = true;
@@ -187,6 +194,8 @@ namespace AddressableAssetTool
 
     public static class AddressaableToolKey
     {
+        internal static readonly StyleColor DefaultNodeBackgroundColor = new Color(0.24f, 0.24f, 0.24f, 0.8f);
+        internal static readonly StyleColor NodeHilightColor = Color.yellow;
         internal static string ScriptObjAssetLabel = "AddressableAssetRules";
         internal static string FeatureDependenciesLabel = "FeatureDependenciesScriptableObject";
         internal static string RuleSearchPath = "Assets";

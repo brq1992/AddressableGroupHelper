@@ -36,9 +36,9 @@ namespace AddressableAssetTool
             var rules = t.AssetbundleGroups;
             foreach (var rule in rules)
             {
-                //Debug.LogError(rule1.name);
+                //IGGDebug.LogError(rule1.name);
                 var group = setting.FindGroup(rule.name);
-                //Debug.LogError(group.name);
+                //IGGDebug.LogError(group.name);
                 foreach (var item in group.entries)
                 {
                     GetPrefabBaseParentDependencies(item);
@@ -48,7 +48,7 @@ namespace AddressableAssetTool
                     var paths = AddressableCache.GetDependencies(guidToPah, _includeIndirect); //AddressabelUtilities.GetDependPaths(AssetDatabase.GUIDToAssetPath(guid), _includeIndirect);
                     foreach (var path in paths)
                     {
-                        //UnityEngine.Debug.LogError("add " + path);
+                        //com.igg.core.IGGDebug.LogError("add " + path);
                         AddAssetPath(path, item);
                     }
                 }

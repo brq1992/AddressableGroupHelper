@@ -10,17 +10,12 @@ namespace AddressableAssetTool.Graph
         {
             if (!(obj is AddressableAssetRule rule))
                 return null;
-            if(dataReady)
-            {
-                if (rule.PackModel == BundledAssetGroupSchema.BundlePackingMode.PackSeparately)
-                    return new AddressableAssetRuleGroup(obj, addressableDependenciesGraph);
-                else
-                    return new AddressableHoleGroup(obj, addressableDependenciesGraph);
-            }
+            if (rule.AddEntryByFolder)
+                return new DependencyPackFolderGroup(rule, addressableDependenciesGraph);
             if (rule.PackModel == BundledAssetGroupSchema.BundlePackingMode.PackSeparately)
-                return new AddressableShowSingleGroup(obj, addressableDependenciesGraph);
+                return new DependencyPackSeparateGroup(obj, addressableDependenciesGraph);
             else
-                return new AddressablePackTogetherGroup(obj, addressableDependenciesGraph);
+                return new DependencyPackTogetherGroup(obj, addressableDependenciesGraph);
         }
     }
 }

@@ -8,7 +8,8 @@ using Object = UnityEngine.Object;
 
 namespace AddressableAssetTool
 {
-    internal class AddressableCache
+    [InitializeOnLoad]
+    public static class AddressableCache
     {
         private static Dictionary<string, string[]> recursiveDic = new Dictionary<string, string[]>();
         private static Dictionary<string, string[]> noRecursiveDic = new Dictionary<string, string[]>();
@@ -54,6 +55,8 @@ namespace AddressableAssetTool
         {
             recursiveDic.Clear();
             noRecursiveDic.Clear();
+            _spriteDic.Clear();
+            _atlasSpritesDic.Clear();
         }
 
         internal static bool TryGetVariantDependencies(string path, out string[] variantDependencies, bool recursive = false)
@@ -96,13 +99,13 @@ namespace AddressableAssetTool
             Object asset = AssetDatabase.LoadAssetAtPath<Object>(variantPath);
             if (asset == null)
             {
-                Debug.LogError("Failed to LoadAssetAtPath prefab variant! " + variantPath);
+                com.igg.core.IGGDebug.LogError("Failed to LoadAssetAtPath prefab variant! " + variantPath);
                 return new string[0];
             }
             GameObject instance = PrefabUtility.InstantiatePrefab(asset) as GameObject;
             if (instance == null)
             {
-                Debug.LogError("Failed to instantiate prefab variant! " + variantPath);
+                com.igg.core.IGGDebug.LogError("Failed to instantiate prefab variant! " + variantPath);
                 return new string[0];
             }
             PrefabUtility.UnpackPrefabInstance(instance, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);

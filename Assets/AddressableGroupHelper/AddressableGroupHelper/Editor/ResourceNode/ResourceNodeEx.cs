@@ -9,6 +9,7 @@ namespace AddressableAssetTool.Graph
 {
     public partial class ResourceNode
     {
+        //move to main node?
         public HashSet<string> Dependencies { get; private set; }
         public Dictionary<AddressableAssetEntry, HashSet<string>> AddressableAssetEntries { get; private set; }
         public AddressableAssetRule AddressableAssetRule { get; private set; }
@@ -17,22 +18,26 @@ namespace AddressableAssetTool.Graph
 
         public void AddDependencies(string[] dependenciesAfterFilter)
         {
+            if(dependenciesAfterFilter == null)
+            {
+                return;
+            }
             for(int i =0; i< dependenciesAfterFilter.Length; i++)
             {
                 if (!Dependencies.Contains(dependenciesAfterFilter[i]))
                 {
-                    var guid = AddressabelUtilities.GetAssetGuid<FeatureDependenciesScriptableObject>(dependenciesAfterFilter[i]);
-                    if(string.IsNullOrEmpty(guid))
-                    {
-                        Debug.LogError("Can't find Dependencies");
-                    }
-                    else
-                    {
-                        if(!AddressabelRuleDependencyCheck.CheckDependencyLegal(dependencyRule, guid))
-                        {
-                            Debug.LogError(AssetDatabase.GUIDToAssetPath(dependencyRule) + " ilegal refer " + AssetDatabase.GUIDToAssetPath(guid));
-                        }
-                    }
+                    //var guid = AddressabelUtilities.GetAssetGuid<FeatureDependenciesScriptableObject>(dependenciesAfterFilter[i]);
+                    //if (string.IsNullOrEmpty(guid))
+                    //{
+                    //    com.igg.core.IGGDebug.Log("Can't find Dependencies");
+                    //}
+                    //else
+                    //{
+                    //    if (!AddressabelRuleDependencyCheck.CheckDependencyLegal(dependencyRule, guid))
+                    //    {
+                    //        com.igg.core.IGGDebug.LogError(AssetDatabase.GUIDToAssetPath(dependencyRule) + " ilegal refer " + AssetDatabase.GUIDToAssetPath(guid));
+                    //    }
+                    //}
                     Dependencies.Add(dependenciesAfterFilter[i]);
                 }
             }
@@ -64,11 +69,11 @@ namespace AddressableAssetTool.Graph
                 AddressableAssetRule = rule;
                 return;
             }
-            Debug.LogError("AddAssetRule wanna set different value " + AddressableAssetRule.name + " " + rule.name);
+            com.igg.core.IGGDebug.LogError("AddAssetRule wanna set different value " + AddressableAssetRule.name + " " + rule.name);
         }
 
 
-        public void CheckReference(ResourceNode resourceNode)
+        public void CheckReferenceByEntry(ResourceNode resourceNode, ResourceGraph aBResourceGraph)
         {
             var thisEntryDic = new Dictionary<string, AddressableAssetEntry>();
 
@@ -89,6 +94,7 @@ namespace AddressableAssetTool.Graph
                     if (thisEntryDic.ContainsKey(path))
                     {
                         resourceNode.AddReference(this);
+                        aBResourceGraph.AddEdge(resourceNode, entry.Key.AssetPath, this, path);
                     }
                 }
             }
@@ -109,6 +115,7 @@ namespace AddressableAssetTool.Graph
                     if (otherEntryDic.ContainsKey(path))
                     {
                         this.AddReference(resourceNode);
+                        aBResourceGraph.AddEdge(this, entry.Key.AssetPath, resourceNode, path);
                     }
                 }
             }
@@ -133,7 +140,7 @@ namespace AddressableAssetTool.Graph
             var guid = AddressabelUtilities.GetAssetGuid<FeatureDependenciesScriptableObject>(assetPath);
             if (string.IsNullOrEmpty(guid))
             {
-                Debug.LogError("Can't find Dependencies "  + assetPath);
+                com.igg.core.IGGDebug.Log("Can't find Dependencies "  + assetPath);
             }
             else
             {

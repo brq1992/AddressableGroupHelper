@@ -7,31 +7,20 @@ using Object = UnityEngine.Object;
 using UnityEditor;
 using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings;
+using UnityEditor.AddressableAssets.Settings.GroupSchemas;
 
 namespace AddressableAssetTool.Graph
 {
     internal abstract class AddressableGraphBaseGroup : GraphBaseGroup
     {
-        //public List<GraphElement> m_AssetConnections = new List<GraphElement>();
-        
-        //public List<Node> m_DependenciesForPlacement = new List<Node>();
-
-        //protected Object _assetRuleObj;
-
-        //public string _assetRulePath;
-        
-        //protected List<Node> groupChildNodes = new List<Node>();
-        //protected readonly float kNodeWidth = AddressaableToolKey.Size.x;
-        //protected AddressableDependenciesGraph _window;
-
-        public AddressableGraphBaseGroup(Object obj, AddressableDependenciesGraph addressableDependenciesGraph) : base(obj, addressableDependenciesGraph)
+        public AddressableGraphBaseGroup(Object obj, GraphWindow addressableDependenciesGraph) : base(obj, addressableDependenciesGraph)
         {
             this._assetRuleObj = obj;
             _window = addressableDependenciesGraph;
         }
 
         internal override void DrawGroup(GraphView m_GraphView, EventCallback<GeometryChangedEvent, GraphBaseGroup> UpdateGroupDependencyNodePlacement,
-            AddressableDependenciesGraph graphWindow)
+            GraphWindow graphWindow)
         {
             throw new NotImplementedException();
         }
@@ -101,11 +90,11 @@ namespace AddressableAssetTool.Graph
             }
         }
 
-        internal virtual Node CreateNode(Object obj, string assetPath, bool prefabCheck, int outDegree, Dictionary<string, Node> m_GUIDNodeLookup,
+        internal virtual Node CreateNode(Object obj, string assetGUID, bool prefabCheck, int outDegree, Dictionary<string, Node> m_GUIDNodeLookup,
             int inDegree = 0)
         {
             Node resultNode;
-            string assetGUID = AssetDatabase.AssetPathToGUID(assetPath);
+            //string assetGUID = AssetDatabase.AssetPathToGUID(assetPath);
             if (m_GUIDNodeLookup.TryGetValue(assetGUID, out resultNode))
             {
                 return resultNode;
@@ -122,7 +111,7 @@ namespace AddressableAssetTool.Graph
                 }
                 };
 
-                objNode.extensionContainer.style.backgroundColor = new Color(0.24f, 0.24f, 0.24f, 0.8f);
+                objNode.extensionContainer.style.backgroundColor = AddressaableToolKey.DefaultNodeBackgroundColor;// new Color(0.24f, 0.24f, 0.24f, 0.8f);
 
                 #region Select button
                 objNode.titleContainer.Add(new Button(() =>
@@ -227,7 +216,7 @@ namespace AddressableAssetTool.Graph
                 Port realPort = objNode.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, typeof(Object));
                 realPort.portName = inDegree + " Dependent";
                 realPort.RegisterCallback<MouseUpEvent>(OnInPortMouseUp);
-                DGTool.GetNodeData(realPort.userData, assetGUID);
+                realPort.userData = DGTool.GetNodeData(realPort.userData, assetGUID);
                 objNode.inputContainer.Add(realPort);
                 //}
 
@@ -241,6 +230,7 @@ namespace AddressableAssetTool.Graph
                     port.portName = outDegree + " Dependencies";
                     DGTool.GetNodeData(port.userData, assetGUID);
                     port.RegisterCallback<MouseUpEvent>(OnOutPortMouseUp);
+                    port.userData = DGTool.GetNodeData(port.userData, assetGUID);
                     objNode.outputContainer.Add(port);
                     objNode.RefreshPorts();
                 }
@@ -261,30 +251,37 @@ namespace AddressableAssetTool.Graph
             VisualElement element = evt.currentTarget as VisualElement;
             if (element == null)
             {
-                Debug.LogError(" OnOutPortMouseUp 1");
+                com.igg.core.IGGDebug.LogError(" OnOutPortMouseUp 1");
                 return;
             }
 
             Port edge = evt.currentTarget as Port;
             if (edge == null)
             {
-                Debug.LogError(" OnOutPortMouseUp 2");
+                com.igg.core.IGGDebug.LogError(" OnOutPortMouseUp 2");
                 return;
             }
 
             var data = edge.userData as GraphViewNodeUserData;
             if (data == null)
             {
-                Debug.LogError(" OnOutPortMouseUp 3");
+                com.igg.core.IGGDebug.LogError(" OnOutPortMouseUp 3");
                 return;
             }
 
             var guid = data.Guid;
-            var node = BaseNodeCreator.guidNodeDic[guid];
-            var inDegree = BaseNodeCreator.graph.GetOutDegree(node);
-            foreach (var item in inDegree)
+            var node = BaseNodeCreator.ABResourceGraph.GetNode(guid);
+            //var inDegree = BaseNodeCreator.graph.GetOutDegree(node);
+            //Debug.LogError(AssetDatabase.GUIDToAssetPath(data.Guid) + " ----------------- out:");
+            foreach (var item in node.References.Values)
             {
-                var asset = AssetDatabase.LoadAssetAtPath<AddressableAssetRule>(AssetDatabase.GUIDToAssetPath(item.Id));
+                //Debug.LogError(AssetDatabase.GUIDToAssetPath(item.ResourceId));
+                //var asset = AssetDatabase.LoadAssetAtPath<AddressableAssetRule>(AssetDatabase.GUIDToAssetPath(item.ResourceId));
+                //if (asset != null && asset.IsRuleUsed)
+                //{
+                //    _window.AddElement(asset);
+                //}
+                var asset = item.AddressableAssetRule;
                 if (asset != null && asset.IsRuleUsed)
                 {
                     _window.AddElement(asset);
@@ -297,30 +294,33 @@ namespace AddressableAssetTool.Graph
             VisualElement element = evt.currentTarget as VisualElement;
             if (element == null)
             {
-                Debug.LogError(" OnInPortMouseUp 1");
+                com.igg.core.IGGDebug.LogError(" OnInPortMouseUp 1");
                 return;
             }
 
             Port edge = evt.currentTarget as Port;
             if (edge == null)
             {
-                Debug.LogError(" OnInPortMouseUp 2");
+                com.igg.core.IGGDebug.LogError(" OnInPortMouseUp 2");
                 return;
             }
 
             var data = edge.userData as GraphViewNodeUserData;
             if (data == null)
             {
-                Debug.LogError(" OnInPortMouseUp 3");
+                com.igg.core.IGGDebug.LogError(" OnInPortMouseUp 3");
                 return;
             }
 
             var guid = data.Guid;
-            var node = BaseNodeCreator.guidNodeDic[guid];
-            var inDegree = BaseNodeCreator.graph.GetInDegree(node);
-            foreach (var item in inDegree)
+            var node = BaseNodeCreator.ABResourceGraph.GetNode(guid);
+            //var inDegree = BaseNodeCreator.graph.GetInDegree(node);
+            //Debug.LogError(AssetDatabase.GUIDToAssetPath(data.Guid) + " ----------------- in:");
+            foreach (var item in node.ReferencedBy.Values)
             {
-                var asset = AssetDatabase.LoadAssetAtPath<AddressableAssetRule>(AssetDatabase.GUIDToAssetPath(item.Id));
+                //Debug.LogError(AssetDatabase.GUIDToAssetPath(item.ResourceId));
+                //var asset = AssetDatabase.LoadAssetAtPath<AddressableAssetRule>(AssetDatabase.GUIDToAssetPath(item.AddressableAssetRule));
+                var asset = item.AddressableAssetRule;
                 if (asset != null && asset.IsRuleUsed)
                 {
                     _window.AddElement(asset);
@@ -420,10 +420,20 @@ namespace AddressableAssetTool.Graph
                         //    edge.userData = new List<EdgeUserData>() { new EdgeUserData(dependencePath, dependentName) };
                         //    m_AssetConnections.Add(edge);
                         //}
-                        Debug.LogError("not implement!");
+                        com.igg.core.IGGDebug.LogError("not implement!");
                     }
                 }
             }
+        }
+
+        protected virtual bool IsMultiNode(AddressableAssetRule rule)
+        {
+            return rule.PackModel == BundledAssetGroupSchema.BundlePackingMode.PackSeparately;
+        }
+
+        protected virtual string GetName(AddressableAssetRule rule)
+        {
+            return rule.name;
         }
     }
 }

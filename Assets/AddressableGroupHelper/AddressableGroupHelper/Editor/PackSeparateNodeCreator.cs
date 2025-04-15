@@ -2,8 +2,8 @@
 using UnityEditor;
 using UnityEditor.AddressableAssets.Settings;
 using UnityEditor.AddressableAssets;
-using UnityEngine;
 using UnityEditor.AddressableAssets.Settings.GroupSchemas;
+using UnityEditor.Build.Pipeline;
 
 namespace AddressableAssetTool.Graph
 {
@@ -14,7 +14,7 @@ namespace AddressableAssetTool.Graph
             this.asset = asset;
         }
 
-        internal override void CreateNode(string assetGUID1, AddressableDependenciesGraph addressableDependenciesGraph)
+        internal override void CreateNode(string assetGUID, AddressableDependenciesGraph addressableDependenciesGraph, BundleBuildResults result)
         {
             _window = addressableDependenciesGraph;
 
@@ -55,7 +55,7 @@ namespace AddressableAssetTool.Graph
                     }
 
                     AddressableAssetRule nodeRule = node.Value.Rule;
-                    if (nodeRule != null && DGTool.IsReliance(item.AssetPath, nodeRule, out var data))// rule.HasConnenct(dependencyString, out isDependence, out edgeUserData))
+                    if (nodeRule != null && DGTool.IsReliance(item.AssetPath, nodeRule, out var data, () => { return nodeRule.name; }, () => { return true; }))// rule.HasConnenct(dependencyString, out isDependence, out edgeUserData))
                     {
                         string _assetRulePath = AssetDatabase.GetAssetPath(nodeRule);
                         string ruleGuid = AssetDatabase.AssetPathToGUID(_assetRulePath);
@@ -94,9 +94,8 @@ namespace AddressableAssetTool.Graph
                     }
 
                     AddressableAssetRule rule = item.Value.Rule;
-                    if (rule != null && DGTool.HasConnect(dependencyString, rule, out NodeDepenData[] data))// rule.HasConnenct(dependencyString, out isDependence, out edgeUserData))
+                    if (rule != null && DGTool.HasConnect(dependencyString, rule, out NodeDepenData[] data, () => { return rule.name; }, () => { return true; }))// rule.HasConnenct(dependencyString, out isDependence, out edgeUserData))
                     {
-                        Debug.LogError(" HasConnect ");
                         string path = AssetDatabase.GetAssetPath(rule);
                         string assetRuleGuid = AssetDatabase.AssetPathToGUID(path);
                         for (int i = 0; i < data.Length; i++)

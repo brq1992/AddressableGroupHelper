@@ -4,9 +4,9 @@ using UnityEditor;
 using UnityEditor.AddressableAssets.Settings;
 using UnityEditor.AddressableAssets;
 using System.IO;
-using UnityEngine.WSA;
 using com.igg.editor;
-using Application = UnityEngine.Application;
+using com.igg.core;
+using UnityEditor.Build.Pipeline.Interfaces;
 
 namespace AddressableAssetTool
 {
@@ -93,9 +93,9 @@ namespace AddressableAssetTool
 
             string newPath = $"{directory}/{filename}{AddressaableToolKey.PrefabVariantName}{extension}";
             //directory = directory.Replace("Assets\\Addressables\\", "");
-            //Debug.LogError(directory);
+            //IGGDebug.LogError(directory);
             //string tempDic = $"{Application.dataPath}\\AddressableTempPrefab\\{directory}";
-            //Debug.LogError(tempDic);
+            //IGGDebug.LogError(tempDic);
             //if (!Directory.Exists(tempDic))
             //{
             //    Directory.CreateDirectory(tempDic);
@@ -105,7 +105,7 @@ namespace AddressableAssetTool
 
             while (System.IO.File.Exists(newPath) && createNewIfExits)
             {
-                Debug.LogError("This variant has a new prefab! " + newPath);
+                com.igg.core.IGGDebug.LogError("This variant has a new prefab! " + newPath);
                 newPath = $"{directory}/{filename}{AddressaableToolKey.PrefabVariantName}{counter}{extension}";
                 counter++;
             }
@@ -115,7 +115,7 @@ namespace AddressableAssetTool
 
         internal static void GetEntryDependencies(List<string> dependenciesList, string[] directDependencies, bool recursive)
         {
-            //UnityEngine.Debug.LogError("GetEntryDependencies start： " + DateTime.Now.ToString());
+            //com.igg.core.IGGDebug.LogError("GetEntryDependencies start： " + DateTime.Now.ToString());
             foreach (var path in directDependencies)
             {
                 if (dependenciesList.Contains(path))
@@ -133,10 +133,10 @@ namespace AddressableAssetTool
                 Object asset = AssetDatabase.LoadAssetAtPath<Object>(path);
                 if (asset == null)
                 {
-                    Debug.LogError("GetEntryDependencies failed when load asset at path: " + path);
+                    com.igg.core.IGGDebug.LogError("GetEntryDependencies failed when load asset at path: " + path);
                     continue;
                 }
-                //UnityEngine.Debug.LogError("GetEntryDependencies path： " + path);
+                //com.igg.core.IGGDebug.LogError("GetEntryDependencies path： " + path);
                 var prefabType = PrefabUtility.GetPrefabAssetType(asset);
 
                 if (prefabType == PrefabAssetType.Regular || prefabType == PrefabAssetType.Variant)
@@ -154,7 +154,7 @@ namespace AddressableAssetTool
 
         internal static void GetAllDependencies(List<string> dependenciesList, string[] directDependencies, bool recursive)
         {
-            //UnityEngine.Debug.LogError("GetEntryDependencies start： " + DateTime.Now.ToString());
+            //com.igg.core.IGGDebug.LogError("GetEntryDependencies start： " + DateTime.Now.ToString());
             foreach (var path in directDependencies)
             {
                 if (dependenciesList.Contains(path))
@@ -167,10 +167,10 @@ namespace AddressableAssetTool
                 Object asset = AssetDatabase.LoadAssetAtPath<Object>(path);
                 if (asset == null)
                 {
-                    Debug.LogError("GetEntryDependencies failed when load asset at path: " + path);
+                    com.igg.core.IGGDebug.LogError("GetEntryDependencies failed when load asset at path: " + path);
                     continue;
                 }
-                //UnityEngine.Debug.LogError("GetEntryDependencies path： " + path);
+                //com.igg.core.IGGDebug.LogError("GetEntryDependencies path： " + path);
                 var prefabType = PrefabUtility.GetPrefabAssetType(asset);
                 if (prefabType == PrefabAssetType.Regular || prefabType == PrefabAssetType.Variant)
                 {
@@ -198,7 +198,7 @@ namespace AddressableAssetTool
         //dir must be the root directory of the rule. 
         static List<string> FindRootAssets(string filter, string rootDir)
         {
-            //Debug.Log("Root dir: " + rootDir);
+            //IGGDebug.Log("Root dir: " + rootDir);
             List<string> guids = new List<string>();
             string[] assetGuids = AssetDatabase.FindAssets(filter, new[] { rootDir });
             List<string> assetPaths = new List<string>();
@@ -210,7 +210,7 @@ namespace AddressableAssetTool
                 childDir = childDir.Replace("\\", "/");
                 if (childDir == rootDir && !IsAFolder(assetPath))
                 {
-                    //Debug.Log("Found asset: " + assetPath);
+                    //IGGDebug.Log("Found asset: " + assetPath);
                     if (assetPath.EndsWith(".asset"))
                     {
                         var rootRule = AssetDatabase.LoadAssetAtPath(assetPath, typeof(ScriptableObject)) as AddressableAssetRule;
@@ -242,7 +242,7 @@ namespace AddressableAssetTool
                     int slashCount = relativePath.Split('/').Length - 1;
                     if (slashCount == 1)
                     {
-                        //Debug.Log("Found dir: " + assetPath);
+                        //IGGDebug.Log("Found dir: " + assetPath);
                         List<string> childGuids = FindChildDirAssets(filter, assetPath);
                         if (childGuids != null)
                             guids.AddRange(childGuids);
@@ -250,11 +250,11 @@ namespace AddressableAssetTool
 
                 }
             }
-            //Debug.LogError("Root dir: " + rootDir);
+            //IGGDebug.LogError("Root dir: " + rootDir);
             //foreach (var asset in guids)
             //{
             //    string assetPath = AssetDatabase.GUIDToAssetPath(asset);
-            //    Debug.LogError("Valid Item: " + assetPath);
+            //    com.igg.core.IGGDebug.LogError("Valid Item: " + assetPath);
             //}
             return guids;
         }
@@ -271,7 +271,7 @@ namespace AddressableAssetTool
                 childDir = childDir.Replace("\\", "/");
                 if (childDir == dir && !IsAFolder(assetPath))
                 {
-                    //Debug.Log("Found asset: " + assetPath);
+                    //IGGDebug.Log("Found asset: " + assetPath);
                     if (assetPath.EndsWith(".asset"))
                     {
                         var rootRule = AssetDatabase.LoadAssetAtPath(assetPath, typeof(ScriptableObject)) as AddressableAssetRule;
@@ -303,7 +303,7 @@ namespace AddressableAssetTool
                     int slashCount = relativePath.Split('/').Length - 1;
                     if (slashCount == 1 && IsAFolder(assetPath))
                     {
-                        //Debug.Log("Found child dir: " + assetPath);
+                        //IGGDebug.Log("Found child dir: " + assetPath);
                         List<string> childGuids = FindChildDirAssets(filter, assetPath);
                         if (childGuids != null)
                             guids.AddRange(childGuids);
@@ -317,50 +317,65 @@ namespace AddressableAssetTool
             return guids;
         }
 
-        public static string[] FindDirectChildren(string searchFilter, string parentFolder)
+        public static string[] FindDirectChildren(string searchFilter, string parentFolder, bool containRules = false)
         {
             string[] guids = AssetDatabase.FindAssets(searchFilter, new[] { parentFolder });
             List<string> directChildGuids = new List<string>();
             string replace = parentFolder.Replace("\\", "/");
-            //Debug.LogError(replace);
-
             foreach (string guid in guids)
             {
                 string path = AssetDatabase.GUIDToAssetPath(guid);
                 //int lastIndex = path.LastIndexOf("/");
                 //string folder = path.Substring(0, lastIndex);
-                //Debug.LogError(path+ "-- "+ folder);
+                //IGGDebug.LogError(path);
                 string relativePath = path.Replace(replace, "").Trim('/');
-                //Debug.LogError(relativePath);
+                //IGGDebug.LogError(relativePath);
                 if (!relativePath.Contains("/"))
                 {
-                    directChildGuids.Add(guid);
+                    //directChildGuids.Add(guid);
+                    if (AssetDatabase.IsValidFolder(path))
+                    {
+                        string[] subFolderGuids = AssetDatabase.FindAssets(searchFilter, new[] { path });
+                        bool hasAssetFile = false;
+                        if (!containRules)
+                        {
+                            string subPathReplace = path.Replace("\\", "/");
+                            foreach (string subGuid in subFolderGuids)
+                            {
+                                string subPath = AssetDatabase.GUIDToAssetPath(subGuid);
+                                string subRelativePath = subPath.Replace(subPathReplace, "").Trim('/');
+                                if (!subRelativePath.Contains("/"))
+                                {
+                                    if (subPath.EndsWith(".asset"))
+                                    {
+                                        if (AssetDatabase.LoadAssetAtPath<AddressableAssetRule>(path) != null ||
+                                            AssetDatabase.LoadAssetAtPath<FeatureDependenciesScriptableObject>(path) != null)
+                                        {
+                                            IGGDebug.LogError("There is a group rule in child dic! parentFolder: " + parentFolder + " " + subPath);
+                                            hasAssetFile = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if (!hasAssetFile)
+                        {
+                            directChildGuids.Add(guid);
+                        }
+                    }
+                    else
+                    {
+                        var obj = AssetDatabase.LoadAssetAtPath<AddressableAssetRule>(path);
+                        if (obj == null)
+                        {
+                            directChildGuids.Add(guid);
+                        }
+                    }
                 }
             }
-
             return directChildGuids.ToArray();
         }
-
-        [MenuItem("Assets/Find ABC ScriptableObject", false, 10)]
-        public static void FindABC()
-        {
-            Object selectedObject = Selection.activeObject;
-            if (selectedObject == null)
-            {
-                Debug.LogError("没有选中任何对象！");
-                return;
-            }
-
-            string path = AssetDatabase.GetAssetPath(selectedObject);
-            if (string.IsNullOrEmpty(path))
-            {
-                Debug.LogError("选中的对象无效或不在Assets目录下！");
-                return;
-            }
-
-            Debug.LogError( GetAssetGuid<FeatureDependenciesScriptableObject>(path));
-        }
-
 
         private static Dictionary<string, string> ruleGuidDic = new Dictionary<string, string>();
 
@@ -386,7 +401,6 @@ namespace AddressableAssetTool
                     if (obj != null)
                     {
                         abcObject = obj;
-                        //Debug.LogError($"找到了ABC：{file}");
                         Selection.activeObject = abcObject; // 选中找到的对象
                         EditorGUIUtility.PingObject(abcObject); // 在项目视图中高亮显示
                         guid = AssetDatabase.AssetPathToGUID(file);
@@ -406,6 +420,57 @@ namespace AddressableAssetTool
                 }
             }
             return null;
+        }
+
+        private static List<string> _ignorePlatforms;
+
+        public static bool NeedIgnorePlatform(string path)
+        {
+            if(_ignorePlatforms == null)
+            {
+                _ignorePlatforms = new List<string>();
+
+#if !UNITY_ANDROID
+                _ignorePlatforms.Add("Android");
+#endif
+
+#if !UNITY_IOS
+                _ignorePlatforms.Add("iOS");
+#endif
+
+#if !UNITY_STANDALONE_WIN
+                _ignorePlatforms.Add("Windows");
+#endif
+            }
+
+            foreach (var ignorePlatform in _ignorePlatforms)
+            {
+                if (path.Contains(ignorePlatform))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        internal static void GetEntryDependencies(List<string> dependenciesList, AssetResultData value)
+        {
+            foreach (var path in value.ReferencedObjects)
+            {
+                string assetPath = AssetDatabase.GUIDToAssetPath(path.guid);
+                if (dependenciesList.Contains(assetPath))
+                {
+                    continue;
+                }
+
+                dependenciesList.Add(assetPath);
+
+                if (IsAssetAddressable(assetPath))
+                {
+                    continue;
+                }
+            }
         }
     }
 }

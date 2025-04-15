@@ -13,7 +13,7 @@ namespace AddressableAssetTool.Graph
         public Group groupNode;
 
         protected Object obj;
-        protected AddressableDependenciesGraph addressableDependenciesGraph;
+        protected GraphWindow addressableDependenciesGraph;
         public List<GraphElement> m_AssetConnections = new List<GraphElement>();
 
         public List<Node> m_DependenciesForPlacement = new List<Node>();
@@ -24,9 +24,9 @@ namespace AddressableAssetTool.Graph
 
         protected List<Node> groupChildNodes = new List<Node>();
         protected readonly float kNodeWidth = AddressaableToolKey.Size.x;
-        protected AddressableDependenciesGraph _window;
+        protected GraphWindow _window;
 
-        public GraphBaseGroup(Object obj, AddressableDependenciesGraph addressableDependenciesGraph)
+        public GraphBaseGroup(Object obj, GraphWindow addressableDependenciesGraph)
         {
             this.obj = obj;
             this.addressableDependenciesGraph = addressableDependenciesGraph;
@@ -38,7 +38,7 @@ namespace AddressableAssetTool.Graph
         internal abstract Rect GetMainNodePositoin();
 
         internal abstract void DrawGroup(GraphView m_GraphView, EventCallback<GeometryChangedEvent, GraphBaseGroup> UpdateGroupDependencyNodePlacement,
-    AddressableDependenciesGraph graphWindow);
+    GraphWindow graphWindow);
 
         internal abstract bool IsReliance(string assetPath, out Node dependencyNode);
         internal abstract bool IsReliance(string assetPath, out Node[] dependentNodes, out string[] dependentPaths);
@@ -58,8 +58,10 @@ namespace AddressableAssetTool.Graph
             return false;
         }
 
-        internal abstract bool IsDependence(string dependencyString, out NodeDepenData[] data, UnityEditor.AddressableAssets.Settings.AddressableAssetEntry item = null);
+        internal abstract bool IsDependence(string dependencyString, out NodeDepenData[] data, UnityEditor.AddressableAssets.Settings.AddressableAssetEntry item = null,
+            string groupName = null);
 
-        internal abstract bool IsReliance(string assetPath, out NodeDepenData[] data, UnityEditor.AddressableAssets.Settings.AddressableAssetEntry item = null);
+        internal abstract bool IsReliance(string assetPath, out NodeDepenData[] data, UnityEditor.AddressableAssets.Settings.AddressableAssetEntry item = null, 
+            string groupName = null);
     }
 }

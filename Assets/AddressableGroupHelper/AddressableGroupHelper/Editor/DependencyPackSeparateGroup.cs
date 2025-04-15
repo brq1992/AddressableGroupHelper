@@ -4,21 +4,22 @@ using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UIElements;
+using UnityEditor.AddressableAssets.Settings;
 
 namespace AddressableAssetTool.Graph
 {
-    internal class AddressableAssetRuleGroup : AddressableGraphBaseGroup
+    internal class DependencyPackSeparateGroup : AddressableGraphBaseGroup
     {
         private AddressableAssetRule _target;
 
-        public AddressableAssetRuleGroup(Object obj, AddressableDependenciesGraph addressableDependenciesGraph) : base(obj, addressableDependenciesGraph)
+        public DependencyPackSeparateGroup(Object obj, GraphWindow addressableDependenciesGraph) : base(obj, addressableDependenciesGraph)
         {
             _target = obj as AddressableAssetRule;
         }
 
         internal override void DrawGroup(GraphView m_GraphView,
             EventCallback<GeometryChangedEvent, GraphBaseGroup> UpdateGroupDependencyNodePlacement,
-            AddressableDependenciesGraph graphWindow)
+            GraphWindow graphWindow)
         {
             _assetRulePath = AssetDatabase.GetAssetPath(_target);
 
@@ -31,7 +32,7 @@ namespace AddressableAssetTool.Graph
 
             if (mainObject == null)
             {
-                Debug.Log("Object doesn't exist anymore");
+                com.igg.core.IGGDebug.Log("Object doesn't exist anymore");
                 return;
             }
 
@@ -46,7 +47,7 @@ namespace AddressableAssetTool.Graph
 
             groupNode.Focus();
 
-            List<GraphBaseGroup> graphBaseGroupList = _window._addressableGroups;
+            //List<GraphBaseGroup> graphBaseGroupList = _window._addressableGroups;
 
             var addressableAssetProfileSettings = AddressableAssetSettingsDefaultObject.Settings;
             var group = addressableAssetProfileSettings.FindGroup(_target.name);
@@ -64,7 +65,7 @@ namespace AddressableAssetTool.Graph
                         inDegree = abNode.ReferencedBy.Count;
                         outDegree = abNode.References.Count;
                     }
-                    var node = CreateNode(item.MainAsset, item.AssetPath, true, outDegree, graphWindow.m_GUIDNodeLookup, inDegree);
+                    var node = CreateNode(item.MainAsset, item.guid, true, outDegree, graphWindow.m_GUIDNodeLookup, inDegree);
                     DGTool.SetNodeData(node.userData, 0);
                     position = BaseLayout.GetNewNodePostion(count);
                     node.SetPosition(position);
@@ -126,7 +127,7 @@ namespace AddressableAssetTool.Graph
             }
         }
 
-        internal override bool IsDependence(string dependencyString, out NodeDepenData[] data, UnityEditor.AddressableAssets.Settings.AddressableAssetEntry item = null)
+        internal override bool IsDependence(string dependencyString, out NodeDepenData[] data, AddressableAssetEntry item = null, string groupName = null)
         {
             throw new System.NotImplementedException();
         }
@@ -141,14 +142,13 @@ namespace AddressableAssetTool.Graph
             throw new System.NotImplementedException();
         }
 
-        internal override bool IsReliance(string assetPath, out NodeDepenData[] data, UnityEditor.AddressableAssets.Settings.AddressableAssetEntry item = null)
+        internal override bool IsReliance(string assetPath, out NodeDepenData[] data, AddressableAssetEntry item = null, string groupName = null)
         {
             throw new System.NotImplementedException();
         }
 
         internal override void SetPosition(Rect pos)
         {
-            throw new System.NotImplementedException();
         }
     }
 }

@@ -2,6 +2,9 @@
 using UnityEditor.AddressableAssets.Settings;
 using UnityEditor.AddressableAssets;
 using UnityEditor;
+using UnityEngine;
+using UnityEditor.Build.Pipeline;
+using UnityEditor.Build.Pipeline.Interfaces;
 
 namespace AddressableAssetTool.Graph
 {
@@ -12,7 +15,7 @@ namespace AddressableAssetTool.Graph
             this.asset = asset;
         }
 
-        internal override void CreateNode(string assetGUID, AddressableDependenciesGraph addressableDependenciesGraph)
+        internal override void CreateNode(string assetGUID, AddressableDependenciesGraph addressableDependenciesGraph, BundleBuildResults result)
         {
             ABResourceGraph.GetOrCreateNode(assetGUID);
             ResourceNode resourceNode = ABResourceGraph.GetNode(assetGUID);
@@ -21,35 +24,31 @@ namespace AddressableAssetTool.Graph
             AddressableAssetRule rule = asset;
             resourceNode.AddAssetRule(rule);
             resourceNode.SetDependencyRule(AssetDatabase.GUIDToAssetPath(assetGUID));
-            var group = setting.FindGroup(rule.name);
-            foreach (var item in group.entries)
+            var group = setting.FindGroup(rule.name); if (group == null)
             {
-                string entryAssetPath = item.AssetPath;
-                string[] dependenciesAfterFilter = null;
-                PrefabAssetType prefabType = PrefabUtility.GetPrefabAssetType(item.MainAsset);
-                List<string> dependenciesList = new List<string>();
-                if (prefabType == PrefabAssetType.Variant || prefabType == PrefabAssetType.Regular)
-                {
-                    var directDependencies = AddressableCache.GetVariantDependencies(item.AssetPath);
-                    AddressabelUtilities.GetEntryDependencies(dependenciesList, directDependencies, false);
-                    dependenciesAfterFilter = dependenciesList.ToArray();
-                }
-                else
-                {
-                    var directDependencies = AddressableCache.GetDependencies(entryAssetPath, false);
-                    AddressabelUtilities.GetEntryDependencies(dependenciesList, directDependencies, false);
-                    dependenciesAfterFilter = dependenciesList.ToArray();
-                }
-               
-                resourceNode.AddDependencies(dependenciesAfterFilter);
-                resourceNode.AddEntry(item, dependenciesAfterFilter);
+                Debug.LogError("Group not find " + rule.name);
+                return;
             }
 
+            foreach (var item in group.entries)
+            {
+                GUID gUID = AssetDatabase.GUIDFromAssetPath(item.AssetPath);
+                if (result.AssetResults.TryGetValue(gUID, out AssetResultData value))
+                {
+                    string entryAssetPath = item.AssetPath;
+                    string[] dependenciesAfterFilter = null;
+                    List<string> dependenciesList = new List<string>();
+                    AddressabelUtilities.GetEntryDependencies(dependenciesList, value);
+                    dependenciesAfterFilter = dependenciesList.ToArray();
+                    resourceNode.AddDependencies(dependenciesAfterFilter);
+                    resourceNode.AddEntry(item, dependenciesAfterFilter);
+                }
+            }
             foreach (var rNode in ABResourceGraph.GetAllNodes())
             {
                 if (rNode.ResourceId != assetGUID)
                 {
-                    rNode.CheckReference(resourceNode);
+                    rNode.CheckReferenceByEntry(resourceNode, ABResourceGraph);
                 }
             }
         }

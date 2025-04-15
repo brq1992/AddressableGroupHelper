@@ -27,7 +27,7 @@ namespace AddressableAssetTool.Graph
 
 
         internal override void DrawGroup(GraphView m_GraphView,
-             EventCallback<GeometryChangedEvent, GraphBaseGroup> UpdateGroupDependencyNodePlacement, AddressableDependenciesGraph graphWindow)
+             EventCallback<GeometryChangedEvent, GraphBaseGroup> UpdateGroupDependencyNodePlacement, GraphWindow graphWindow)
         {
             _assetRulePath = AssetDatabase.GetAssetPath(obj);
 
@@ -217,7 +217,7 @@ namespace AddressableAssetTool.Graph
         internal virtual void CreateDependencyNodes(AddressableAssetGroup AddressableGroup, string[] dependencies, Node parentNode, Group groupNode, int depth,
             GraphView m_GraphView, Dictionary<string, Node> m_GUIDNodeLookup)
         {
-            //Debug.Log(depth);
+            //IGGDebug.Log(depth);
 
             foreach (string dependencyString in dependencies)
             {
@@ -376,12 +376,12 @@ namespace AddressableAssetTool.Graph
             return mainNode.GetPosition();
         }
 
-        internal override bool IsDependence(string dependencyString, out NodeDepenData[] data , UnityEditor.AddressableAssets.Settings.AddressableAssetEntry item = null)
+        internal override bool IsDependence(string dependencyString, out NodeDepenData[] data , UnityEditor.AddressableAssets.Settings.AddressableAssetEntry item = null, string groupName = null)
         {
             throw new NotImplementedException();
         }
 
-        internal override bool IsReliance(string assetPath, out NodeDepenData[] data, UnityEditor.AddressableAssets.Settings.AddressableAssetEntry item = null)
+        internal override bool IsReliance(string assetPath, out NodeDepenData[] data, UnityEditor.AddressableAssets.Settings.AddressableAssetEntry item = null, string groupName = null)
         {
             throw new NotImplementedException();
         }

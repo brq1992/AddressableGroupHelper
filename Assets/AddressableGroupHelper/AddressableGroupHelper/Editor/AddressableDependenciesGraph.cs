@@ -1,9 +1,10 @@
-
-//using AssetUsageFinder;
+﻿
+using AssetUsageFinder;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using UnityEditor;
+using UnityEditor.AddressableAssets;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -12,18 +13,10 @@ using Object = UnityEngine.Object;
 
 namespace AddressableAssetTool.Graph
 {
-    public class AddressableDependenciesGraph : EditorWindow
+    public class AddressableDependenciesGraph : GraphWindow
     {
-        public readonly Dictionary<string, Node> m_GUIDNodeLookup = new Dictionary<string, Node>();
 
-        private GraphView m_GraphView;
-        private readonly List<Object> SelectedObjects = new List<Object>();
-        internal readonly List<GraphBaseGroup> _addressableGroups = new List<GraphBaseGroup>();
-        private readonly List<Node> _groups = new List<Node>();
 
-        private const float kNodeWidth = 250.0f;
-        private Toggle AlignmentToggle;
-        private VisualElement _infoWindow;
 
         [MenuItem("Tools/AddressableAssetManager/Preparing Dependency Graph Data")]
         public static void CreateAddressableDependenciesGraphWindowWithData()
@@ -48,8 +41,17 @@ namespace AddressableAssetTool.Graph
         {
             if(!BaseNodeCreator.NewNodeInit)
             {
+                var context = AddressableAssetSettingsDefaultObject.Settings;
+                var rule = new CheckBundleDupeDependenciesMultiIsolatedGroups();
+                rule.ClearAnalysis();
+                var result = rule.CheckDependencies(context);
+
+                if(result == null)
+                {
+                    Debug.LogError(" Check Dependencies return null ");
+                    return;
+                }
                 BaseNodeCreator.NewNodeInit = true;
-                //Debug.LogError("Change to search whole project!");
                 var getAssetRuleGuids = AddressabelUtilities.GetAssetRuleGuidsInFolder("Assets");
 
                 BaseNodeCreator.ClearABGraphData();
@@ -66,7 +68,7 @@ namespace AddressableAssetTool.Graph
                         if (asset != null && asset.IsRuleUsed)
                         {
                             var baseNodeCreator = GroupNodeCreatorFactory.GetCreator(asset);
-                            baseNodeCreator.CreateNode(guid, null);
+                            baseNodeCreator.CreateNode(guid, null, result);
                             currentCount++;
                             EditorUtility.DisplayProgressBar("Addressable Dependencies Graph", "Caculating Asset Dependencies, please wait...", currentCount / totalCount);
                         }
@@ -74,7 +76,7 @@ namespace AddressableAssetTool.Graph
                 }
                 catch (Exception e)
                 {
-                    Debug.LogError(e.ToString());
+                    com.igg.core.IGGDebug.LogError(e.ToString());
                 }
             }
 
@@ -86,7 +88,7 @@ namespace AddressableAssetTool.Graph
         private static void CalculateCircularReference()
         {
             var circularReferences = BaseNodeCreator.ABResourceGraph.GetAllCircularReferences();
-            Debug.LogError("Circular References:");
+            com.igg.core.IGGDebug.LogError("Circular References:");
             foreach (var circularPath in circularReferences)
             {
                 StringBuilder builder = new StringBuilder();
@@ -94,7 +96,7 @@ namespace AddressableAssetTool.Graph
                 {
                     builder.Append(AssetDatabase.GUIDToAssetPath(guid) + " -> ");
                 }
-                Debug.LogError(builder.ToString());
+                com.igg.core.IGGDebug.LogError(builder.ToString());
             }
         }
 
@@ -114,7 +116,7 @@ namespace AddressableAssetTool.Graph
                 string output = string.Join("-> ", paths);
                 if (depth > 3)
                 {
-                    Debug.LogError($"Resource {AssetDatabase.GUIDToAssetPath(node.ResourceId)} depth: {--depth} paths {output}");
+                    com.igg.core.IGGDebug.LogError($"Resource {AssetDatabase.GUIDToAssetPath(node.ResourceId)} depth: {--depth} paths {output}");
                 }
             }
         }
@@ -136,165 +138,9 @@ namespace AddressableAssetTool.Graph
         private static void CalculateCommonReference()
         {
             var commonPath = "";
-
-
         }
 
-        public void OnEnable()
-        {
-            CreateGraph();
-
-            if(BaseNodeCreator.Init)
-            {
-                return;
-            }
-
-            return;
-
-            EditorUtility.DisplayProgressBar("Addressable Dependencies Graph", "Caculating Asset Dependencies, please wait...", 0);
-
-            //BaseNodeCreator.graph.Clear();
-
-            var getAssetRuleGuids = AddressabelUtilities.GetAssetRuleGuidsInFolder(AddressaableToolKey.RuleSearchPath);
-
-            int totalCount = getAssetRuleGuids.Length;
-            float currentCount = 0;
-            try
-            {
-                foreach (var guid in getAssetRuleGuids)
-                {
-                    var assetPath = AssetDatabase.GUIDToAssetPath(guid);
-                    var asset = AssetDatabase.LoadAssetAtPath<AddressableAssetRule>(assetPath);
-                    if (asset != null && asset.IsRuleUsed)
-                    {
-                        var baseNodeCreator = GroupNodeCreatorFactory.GetCreator(asset);
-                        baseNodeCreator.CreateNode(guid, this);
-                        currentCount++;
-                        EditorUtility.DisplayProgressBar("Addressable Dependencies Graph", "Caculating Asset Dependencies, please wait...", currentCount / totalCount);
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                Debug.LogError(e.ToString());
-            }
-
-            //BaseNodeCreator.graph.PrintGraph();
-
-            EditorUtility.ClearProgressBar();
-
-
-            BaseNodeCreator.Init = true;
-        }
-
-        void CreateGraph()
-        {
-            m_GraphView = new AddressableGraphView(this)
-            {
-                name = "Dependency Graph",
-            };
-
-            VisualElement toolbar = CreateToolbar();
-            //VisualElement toolbar2 = CreateFilterbar();
-
-            rootVisualElement.Add(toolbar);
-            //rootVisualElement.Add(toolbar2);
-
-
-            rootVisualElement.Add(m_GraphView);
-            m_GraphView.StretchToParentSize();
-            toolbar.BringToFront();
-            //toolbar2.BringToFront();
-
-            _infoWindow = CreateInfoWindow();
-
-        }
-
-        private VisualElement CreateToolbar()
-        {
-            var toolbar = new VisualElement
-            {
-                style =
-            {
-                flexDirection = FlexDirection.Row,
-                flexGrow = 0,
-                backgroundColor = new Color(0.25f, 0.25f, 0.25f, 0.75f)
-            }
-            };
-
-            var options = new VisualElement
-            {
-                style = { alignContent = Align.Center }
-            };
-
-            toolbar.Add(options);
-            toolbar.Add(new Button(AddElements)
-            {
-                text = "Add Asset",
-            });
-            toolbar.Add(new Button(ClearGraph)
-            {
-                text = "Clear"
-            });
-
-            AlignmentToggle = new Toggle();
-            AlignmentToggle.text = "Horizontal Layout";
-            AlignmentToggle.value = false;
-            AlignmentToggle.RegisterValueChangedCallback(x =>
-            {
-                ResetAllNodes();
-            });
-            //toolbar.Add(AlignmentToggle);
-
-            return toolbar;
-        }
-
-        private void ClearGraph()
-        {
-            SelectedObjects.Clear();
-
-            foreach (var assetGroup in _addressableGroups)
-            {
-                EmptyGroup(assetGroup);
-            }
-
-            m_GUIDNodeLookup.Clear();
-
-            _addressableGroups.Clear();
-
-            _groups.Clear();
-        }
-
-        void EmptyGroup(GraphBaseGroup assetGroup)
-        {
-            if (assetGroup.m_AssetConnections.Count > 0)
-            {
-                foreach (var edge in assetGroup.m_AssetConnections)
-                {
-                    m_GraphView.RemoveElement(edge);
-                }
-            }
-            assetGroup.m_AssetConnections.Clear();
-
-            foreach (var node in assetGroup.m_AssetNodes)
-            {
-                m_GraphView.RemoveElement(node);
-            }
-            assetGroup.m_AssetNodes.Clear();
-
-            assetGroup.m_DependenciesForPlacement.Clear();
-
-            //if (assetGroup.SharedGroup != null) {
-            //    EmptyGroup(assetGroup.SharedGroup);
-            //}
-
-            m_GraphView.RemoveElement(assetGroup.groupNode);
-
-            assetGroup.groupNode = null;
-        }
-
-
-        public void AddElements(Object[] objs)
+        public override void AddElements(Object[] objs)
         {
             foreach(var obj in objs)
             {
@@ -326,7 +172,7 @@ namespace AddressableAssetTool.Graph
                 if (SelectedObjects.Contains(obj))
                 {
                     string name = obj.name;
-                    Debug.Log("Object " + name + " already loaded " + objPath);
+                    com.igg.core.IGGDebug.Log("Object " + name + " already loaded " + objPath);
                     return;
                 }
 
@@ -334,7 +180,7 @@ namespace AddressableAssetTool.Graph
                 //assetPath will be empty if obj is null or isn't an asset (a scene object)
                 if (obj == null || string.IsNullOrEmpty(objPath))
                 {
-                    Debug.Log("objPath is NullorEmpty");
+                    com.igg.core.IGGDebug.Log("objPath is NullorEmpty");
                     return;
                 }
 
@@ -342,7 +188,7 @@ namespace AddressableAssetTool.Graph
 
                 if (mainObject == null)
                 {
-                    Debug.Log("Object doesn't exist anymore");
+                    com.igg.core.IGGDebug.Log("Object doesn't exist anymore");
                     return;
                 }
 
@@ -351,7 +197,7 @@ namespace AddressableAssetTool.Graph
 
                 //adGroup._assetRulePath = objPath;
 
-                Debug.Log("add obj " + obj.name + " to selectlist " + objPath);
+                com.igg.core.IGGDebug.Log("add obj " + obj.name + " to selectlist " + objPath);
                 SelectedObjects.Add(obj);
 
                 adGroup.groupNode = new Group { title = obj.name };
@@ -391,13 +237,12 @@ namespace AddressableAssetTool.Graph
             }
         }
 
-        private void AddElements()
+        internal override void AddElement(object asset)
         {
-            Object[] objs = Selection.objects;
-            AddElements(objs);
+            AddElement((AddressableAssetRule)asset);
         }
 
-        public void AddElement(Object obj)
+        public void AddElement(AddressableAssetRule obj)
         {
             var objPath = AssetDatabase.GetAssetPath(obj);
 
@@ -405,7 +250,7 @@ namespace AddressableAssetTool.Graph
             if (SelectedObjects.Contains(obj))
             {
                 string name = obj.name;
-                Debug.Log("Object " + name + " already loaded " + objPath);
+                com.igg.core.IGGDebug.Log("Rule " + name + " already loaded " + objPath);
                 return;
             }
 
@@ -413,7 +258,7 @@ namespace AddressableAssetTool.Graph
             //assetPath will be empty if obj is null or isn't an asset (a scene object)
             if (obj == null || string.IsNullOrEmpty(objPath))
             {
-                Debug.Log("objPath is NullorEmpty");
+                com.igg.core.IGGDebug.Log("objPath is NullorEmpty");
                 return;
             }
 
@@ -421,71 +266,27 @@ namespace AddressableAssetTool.Graph
 
             if (mainObject == null)
             {
-                Debug.Log("Object doesn't exist anymore");
+                com.igg.core.IGGDebug.Log("Rule doesn't exist anymore");
                 return;
             }
 
-            var adGroup = AddressableBaseGroupFactory.GetGroup(obj, this, BaseNodeCreator.NewNodeInit);// new AddressableBaseGroup();
+            if(!obj.IsRuleUsed)
+            {
+                com.igg.core.IGGDebug.Log("Rule isn't used!");
+                return;
+            }
+
+            var adGroup = AddressableBaseGroupFactory.GetGroup(obj, this, true);// new AddressableBaseGroup();
             _addressableGroups.Add(adGroup);
 
             //adGroup._assetRulePath = objPath;
 
-            Debug.Log("add obj " + obj.name + " to selectlist " + objPath);
+            //com.igg.core.IGGDebug.Log("add obj " + obj.name + " to selectlist " + objPath);
             SelectedObjects.Add(obj);
-
-            adGroup.groupNode = new Group { title = obj.name };
-
-            adGroup.DrawGroup(m_GraphView, UpdateGroupDependencyNodePlacement, this);
-        }
-
-         static void ExtroctMethod(AddressableGraphBaseGroup adGroup, Object obj, GraphView m_GraphView, 
-             EventCallback<GeometryChangedEvent, AddressableGraphBaseGroup> UpdateGroupDependencyNodePlacement, AddressableDependenciesGraph graphWindow)
-        {
-            //adGroup._assetRulePath = AssetDatabase.GetAssetPath(obj);
-
-            ////assetPath will be empty if obj is null or isn't an asset (a scene object)
-            //if (obj == null || string.IsNullOrEmpty(adGroup._assetRulePath))
-            //    return;
 
             //adGroup.groupNode = new Group { title = obj.name };
 
-
-            //Object mainObject = AssetDatabase.LoadMainAssetAtPath(adGroup._assetRulePath);
-
-            //if (mainObject == null)
-            //{
-            //    Debug.Log("Object doesn't exist anymore");
-            //    return;
-            //}
-
-            //string[] dependencies = adGroup.GetDependencies(); // AssetDatabase.GetDependencies(adGroup.assetPath, false);
-
-            //adGroup.mainNode = CreateNode(adGroup, mainObject, adGroup._assetRulePath, true, dependencies.Length, graphWindow.m_GUIDNodeLookup);
-            //adGroup.mainNode.userData = 0;
-
-            //Rect position = new Rect(0, 0, 0, 0);
-            //adGroup.mainNode.SetPosition(position);
-
-            //if (!m_GraphView.Contains(adGroup.groupNode))
-            //{
-            //    m_GraphView.AddElement(adGroup.groupNode);
-            //}
-
-            //m_GraphView.AddElement(adGroup.mainNode);
-
-            //adGroup.groupNode.AddElement(adGroup.mainNode);
-
-            //CreateDependencyNodes(adGroup, dependencies, adGroup.mainNode, adGroup.groupNode, 1, m_GraphView, graphWindow.m_GUIDNodeLookup);
-
-            //adGroup.m_AssetNodes.Add(adGroup.mainNode);
-
-            //adGroup.groupNode.capabilities &= ~Capabilities.Deletable;
-
-            //adGroup.groupNode.Focus();
-
-            //adGroup.mainNode.RegisterCallback<GeometryChangedEvent, AddressableGraphBaseGroup>(
-            //    UpdateGroupDependencyNodePlacement, adGroup
-            //);
+            adGroup.DrawGroup(m_GraphView, UpdateGroupDependencyNodePlacement, this);
         }
 
         private static Node CreateNode(AddressableGraphBaseGroup AddressableGroup, Object obj, string assetPath, bool isMainNode, 
@@ -642,7 +443,7 @@ namespace AddressableAssetTool.Graph
         private static void CreateDependencyNodes(AddressableGraphBaseGroup AddressableGroup, string[] dependencies, Node parentNode, Group groupNode, int depth, 
             GraphView m_GraphView, Dictionary<string, Node> m_GUIDNodeLookup)
         {
-            //Debug.Log(depth);
+            //IGGDebug.Log(depth);
 
             foreach (string dependencyString in dependencies)
             {
@@ -736,97 +537,10 @@ namespace AddressableAssetTool.Graph
             return edge;
         }
 
-        private void UpdateGroupDependencyNodePlacement(GeometryChangedEvent e, GraphBaseGroup baseGroup)
-        {
-
-            //((AddressableBaseGroup)baseGroup).mainNode.UnregisterCallback<GeometryChangedEvent, AddressableGraphBaseGroup>(
-            //    UpdateGroupDependencyNodePlacement
-            //);
-
-
-            baseGroup.UnregisterCallback(UpdateGroupDependencyNodePlacement);
-
-            ResetNodes(baseGroup);
-
-            Rect pos = BaseLayout.GetNewNodePostion(_addressableGroups);
-            //baseGroup.groupNode.SetPosition(pos);
-            //baseGroup.mainNode.SetPosition(pos);
-            baseGroup.SetPosition(pos);
-        }
-
-        void ResetNodes(GraphBaseGroup assetGroup)
-        {
-            // The current y offset in per depth
-            var depthOffset = new Dictionary<int, float>();
-
-            foreach (var node in assetGroup.m_DependenciesForPlacement)
-            {
-                int depth = (int)node.userData;
-
-                if (!depthOffset.ContainsKey(depth))
-                    depthOffset.Add(depth, 0.0f);
-
-                if (AlignmentToggle.value)
-                {
-                    depthOffset[depth] += node.layout.height;
-                }
-                else
-                {
-                    depthOffset[depth] += node.layout.width;
-                }
-            }
-
-            // Move half of the node into negative y space so they're on either size of the main node in y axis
-            var depths = new List<int>(depthOffset.Keys);
-            foreach (int depth in depths)
-            {
-                if (depth == 0)
-                    continue;
-
-                float offset = depthOffset[depth];
-                depthOffset[depth] = (0f - offset / 2.0f);
-            }
-
-            Rect mainNodeRect = assetGroup.GetMainNodePositoin();// assetGroup.mainNode.GetPosition();
-
-            foreach (var node in assetGroup.m_DependenciesForPlacement)
-            {
-                int depth = (int)node.userData;
-                //Debug.Log(node.layout);
-                if (AlignmentToggle.value)
-                {
-                    //node.SetPosition(new Rect(mainNodeRect.x + kNodeWidth * 1.5f * depth, mainNodeRect.y + depthOffset[depth], 0, 0));
-                    node.SetPosition(new Rect(mainNodeRect.x + node.layout.width * 1.5f * depth, mainNodeRect.y + depthOffset[depth], 0, 0));
-                }
-                else
-                {
-                    node.SetPosition(new Rect(mainNodeRect.x + depthOffset[depth], mainNodeRect.y + node.layout.height * 1.5f * depth, 0, 0));
-                    //node.SetPosition(new Rect(mainNodeRect.x + depthOffset[depth], mainNodeRect.y + kNodeWidth * 1.5f * depth, 0, 0));
-                }
-
-                if (AlignmentToggle.value)
-                {
-                    depthOffset[depth] += node.layout.height;
-                }
-                else
-                {
-                    depthOffset[depth] += node.layout.width;
-                }
-            }
-        }
-
-        void ResetAllNodes()
-        {
-            foreach (var assetGroup in _addressableGroups)
-            {
-                ResetNodes(assetGroup);
-            }
-        }
-
         public static StyleColor GetColorByAssetType(Object obj)
         {
             var typeName = obj.GetType().Name;
-            //Debug.Log(obj.GetType());
+            //IGGDebug.Log(obj.GetType());
             switch (typeName)
             {
                 case "MonoScript":
@@ -890,124 +604,16 @@ namespace AddressableAssetTool.Graph
 
         #region Edge Info Window
 
-        internal void ShowInfoWindow(MouseUpEvent evt)
-        {
-            VisualElement element = evt.currentTarget as VisualElement;
-            if (element == null)
-            {
-                return;
-            }
-            Edge edge = evt.currentTarget as Edge;
-            if (edge == null)
-            {
-                return;
-            }
-            var data = edge.userData as List<EdgeUserData>;
-            if (data == null)
-            {
-                return;
-            }
-
-
-            StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.Append("Dependence: \\n");
-            for (int i = 0; i < data.Count; i++)
-            {
-                string value = data[i].ParentPath + " -> " + data[i].Dependence + "\\n";
-                stringBuilder.Append(value);
-            }
-
-            //Debug.LogError(data.ParentPath + "  " + data.Dependence);
-            _infoWindow.Q<Label>("info").text = stringBuilder.ToString();
-            //_infoWindow.Q<Image>("info-image").image = EditorGUIUtility.IconContent("console.infoicon").image;
-
-            //_infoWindow.Q<Label>("info").text = "Dependence: " + data.ParentPath + " -> " + data.Dependence;
-
-            _infoWindow.Q<Button>("ShowReliance").userData = data;
 
 
 
-            if (!m_GraphView.Contains(_infoWindow))
-            {
-                m_GraphView.Add(_infoWindow);
-            }
 
-            _infoWindow.style.left = m_GraphView.contentContainer.resolvedStyle.width - _infoWindow.resolvedStyle.width;
-            _infoWindow.style.top = 20;
-
-
-            //Vector2 mousePosition = (evt.currentTarget as VisualElement).ChangeCoordinatesTo(contentViewContainer, evt.localMousePosition);
-            //foreach (var edge in this.Query<Edge>().ToList())
-            //{
-            //    if (edge.worldBound.Contains(mousePosition))
-            //    {
-            //        Debug.LogError("erroe");
-            //        evt.StopPropagation();
-            //        break;
-            //    }
-            //}
-        }
-
-        private VisualElement CreateInfoWindow()
-        {
-            var container = new VisualElement();
-            container.style.width = 250;
-            container.style.height = 150;
-            container.style.backgroundColor = new StyleColor(Color.grey);
-            container.style.position = Position.Absolute;
-            container.style.paddingLeft = 10;
-            container.style.paddingRight = 10;
-            container.style.paddingTop = 10;
-            container.style.paddingBottom = 10;
-
-            var label = new Label("Inspector");
-            label.name = "title";
-            container.Add(label);
-
-            var info = new Label("Dependence");
-            info.name = "info";
-            info.style.whiteSpace = WhiteSpace.Normal; 
-            info.style.overflow = Overflow.Visible; 
-            info.style.flexShrink = 1; 
-            info.style.fontSize = 12;
-            container.Add(info);
-
-            var showDependencyBtn = new Button();
-            showDependencyBtn.text = "Show Reliance";
-            showDependencyBtn.name = "ShowReliance";
-            showDependencyBtn.clicked += OnClickShowReliance;
-            container.Add(showDependencyBtn);
-
-
-            return container;
-        }
-
-        private void OnClickShowReliance()
-        {
-            //Debug.LogError("show click!");
-            var userData =  _infoWindow.Q<Button>("ShowReliance").userData as List<EdgeUserData>;
-
-            if(userData == null)
-            {
-                return;
-            }
-
-            if (!string.IsNullOrEmpty(userData[0].Dependence))
-            {
-                //EditorGUIUtility.PingObject(source);                
-                //Selection.activeObject = 
-                var obj = AssetDatabase.LoadAssetAtPath(userData[0].Dependence, typeof(Object));
-                Selection.activeObject = obj;
-                //GuiManager.FileMenu(null);
-            }
-            
-        }
 
         #endregion
 
         #region Graph Mouse Event
 
-        internal void OnMouseUp(MouseUpEvent evt)
+        public override void OnMouseUp(MouseUpEvent evt)
         {
             // click not happen on Edge
             if (m_GraphView.Contains(_infoWindow))
@@ -1025,12 +631,7 @@ namespace AddressableAssetTool.Graph
         //    _groups.Add(groupNode);
         //}
 
-        internal void AddAndPosMainNode(Node groupNode)
-        {
-            Rect pos = BaseLayout.GetNewGroupNodePosition(_groups);
-            groupNode.SetPosition(pos);
-            _groups.Add(groupNode);
-        }
+
     }
 }
 

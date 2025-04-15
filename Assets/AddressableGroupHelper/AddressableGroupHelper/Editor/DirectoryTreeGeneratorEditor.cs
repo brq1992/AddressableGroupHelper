@@ -1,4 +1,3 @@
-using AddressableAssetTool;
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
@@ -25,18 +24,18 @@ namespace AddressableAssetTool
 
                     string outputPath = Path.Combine(Application.dataPath, "DirectoryTree.txt");
                     File.WriteAllLines(outputPath, lines);
-                    Debug.Log("Directory tree generated at: " + outputPath);
+                    com.igg.core.IGGDebug.Log("Directory tree generated at: " + outputPath);
 
                     OpenWithNotepadPlusPlus(outputPath);
                 }
                 else
                 {
-                    Debug.LogError("Selected object is not a folder.");
+                    com.igg.core.IGGDebug.LogError("Selected object is not a folder.");
                 }
             }
             else
             {
-                Debug.LogError("No folder selected.");
+                com.igg.core.IGGDebug.LogError("No folder selected.");
             }
         }
 
@@ -101,7 +100,7 @@ namespace AddressableAssetTool
             }
             else
             {
-                UnityEngine.Debug.LogError("Notepad++ not found at: " + notepadPlusPlusPath);
+                com.igg.core.IGGDebug.LogError("Notepad++ not found at: " + notepadPlusPlusPath);
             }
         }
     }

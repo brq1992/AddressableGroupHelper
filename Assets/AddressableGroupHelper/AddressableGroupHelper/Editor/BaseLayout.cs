@@ -46,7 +46,7 @@ namespace AddressableAssetTool.Graph
         internal static Rect GetNewGroupNodePosition(List<Node> groups)
         {
             int n = groups.Count;
-            //Debug.LogError("n " + n);
+            //IGGDebug.LogError("n " + n);
             float angle = n * Mathf.PI * (3 - Mathf.Sqrt(5));
             float radius = AddressaableToolKey.GroupRadius * Mathf.Sqrt(n);
 

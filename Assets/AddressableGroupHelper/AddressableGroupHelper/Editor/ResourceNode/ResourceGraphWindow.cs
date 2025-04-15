@@ -40,7 +40,7 @@ namespace AddressableAssetTool.Graph
                 //    {
                 //        if(string.IsNullOrEmpty(referencedBy.ResourceId))
                 //        {
-                //            Debug.LogError("null!");
+                //            com.igg.core.IGGDebug.LogError("null!");
                 //        }
                 //        //GUILayout.Label($"  - {referencedBy.ResourceId}");
                 //    }
@@ -68,7 +68,7 @@ namespace AddressableAssetTool.Graph
             resourceGraph = graphBuilder.GetResourceGraph();
 
             var circularReferences = resourceGraph.GetAllCircularReferences();
-            Debug.LogError("Circular References:");
+            com.igg.core.IGGDebug.LogError("Circular References:");
             foreach (var circularPath in circularReferences)
             {
                 StringBuilder builder = new StringBuilder();
@@ -76,7 +76,7 @@ namespace AddressableAssetTool.Graph
                 {
                     builder.Append(AssetDatabase.GUIDToAssetPath(guid) + " -> ");
                 }
-                Debug.LogError(builder.ToString());
+                com.igg.core.IGGDebug.LogError(builder.ToString());
             }
 
             // 

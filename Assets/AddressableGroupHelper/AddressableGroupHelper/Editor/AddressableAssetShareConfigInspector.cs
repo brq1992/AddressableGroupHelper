@@ -28,16 +28,16 @@ namespace AddressableAssetTool
             foreach (Object obj in Selection.GetFiltered(typeof(Object), SelectionMode.Assets))
             {
                 selectionpath = AssetDatabase.GetAssetPath(obj);
-                //Debug.Log("selectionpath in foreach: " + selectionpath);
+                //IGGDebug.Log("selectionpath in foreach: " + selectionpath);
                 if (File.Exists(selectionpath))
                 {
-                    //Debug.Log("File.Exists: " + selectionpath);
+                    //IGGDebug.Log("File.Exists: " + selectionpath);
                     selectionpath = Path.GetDirectoryName(selectionpath);
                 }
                 break;
             }
 
-            Debug.LogError("selectionpath: " + selectionpath);
+            com.igg.core.IGGDebug.LogError("selectionpath: " + selectionpath);
             string[] directorys = selectionpath.Split("\\");
 
             StringBuilder stringBuilder = new StringBuilder();
@@ -45,7 +45,7 @@ namespace AddressableAssetTool
             stringBuilder.Append(".asset");
             string assetName = stringBuilder.ToString();
             string newRuleFileName = AssetDatabase.GenerateUniqueAssetPath(Path.Combine(selectionpath, assetName));
-            Debug.LogError(newRuleFileName);
+            com.igg.core.IGGDebug.LogError(newRuleFileName);
             newRuleFileName = newRuleFileName.Replace("\\", "/");
             AssetDatabase.CreateAsset(newRule, newRuleFileName);
             AssetDatabase.SaveAssets();
@@ -121,7 +121,7 @@ namespace AddressableAssetTool
             EditorGUILayout.Space(10f);
             foreach (var item in data)
             {
-                //Debug.LogError(" set " + item.Key);
+                //IGGDebug.LogError(" set " + item.Key);
                 //EditorGUILayout.BeginVertical();
                 //EditorGUILayout.LabelField(item.Key);
                 //EditorGUILayout.LabelField("ReferenceBy: ");

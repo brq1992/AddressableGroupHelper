@@ -2,8 +2,8 @@
 using UnityEditor;
 using UnityEditor.AddressableAssets.Settings;
 using UnityEditor.AddressableAssets;
-using UnityEngine;
 using UnityEditor.AddressableAssets.Settings.GroupSchemas;
+using UnityEditor.Build.Pipeline;
 
 namespace AddressableAssetTool.Graph
 {
@@ -15,7 +15,7 @@ namespace AddressableAssetTool.Graph
             this.asset = asset;
         }
 
-        internal override void CreateNode(string assetGUID, AddressableDependenciesGraph addressableDependenciesGraph)
+        internal override void CreateNode(string assetGUID, AddressableDependenciesGraph addressableDependenciesGraph, BundleBuildResults result)
         {
             _window = addressableDependenciesGraph;
 
@@ -31,7 +31,7 @@ namespace AddressableAssetTool.Graph
                 string entryAssetPath = item.AssetPath;
                 if(item.MainAsset == null)
                 {
-                    Debug.LogError("Get Entry failed " + group.name + " " + item.AssetPath);
+                    com.igg.core.IGGDebug.LogError("Get Entry failed " + group.name + " " + item.AssetPath);
                     return;
                 }
                 var prefabType = PrefabUtility.GetPrefabAssetType(item.MainAsset);
@@ -62,7 +62,7 @@ namespace AddressableAssetTool.Graph
                     }
 
                     AddressableAssetRule nodeRule = node.Value.Rule;
-                    if (nodeRule != null && DGTool.IsReliance(item.AssetPath, nodeRule, out var data))// rule.HasConnenct(dependencyString, out isDependence, out edgeUserData))
+                    if (nodeRule != null && DGTool.IsReliance(item.AssetPath, nodeRule, out var data, () => { return nodeRule.name; }, () => { return false; }))// rule.HasConnenct(dependencyString, out isDependence, out edgeUserData))
                     {
                         string _assetRulePath = AssetDatabase.GetAssetPath(nodeRule);
                         string guid = AssetDatabase.AssetPathToGUID(_assetRulePath);

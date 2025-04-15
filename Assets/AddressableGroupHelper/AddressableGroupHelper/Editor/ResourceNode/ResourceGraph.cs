@@ -3,7 +3,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
-using UnityEngine;
 
 namespace AddressableAssetTool.Graph
 {
@@ -138,7 +137,7 @@ namespace AddressableAssetTool.Graph
                 List<string> paths = new List<string>();
                 int depth = GetReferenceDepth(node.ResourceId, out paths);
                 string output = string.Join("-> " , paths);
-                Debug.LogError($"Resource {AssetDatabase.GUIDToAssetPath(node.ResourceId)} depth: {--depth} paths {output}");
+                com.igg.core.IGGDebug.LogError($"Resource {AssetDatabase.GUIDToAssetPath(node.ResourceId)} depth: {--depth} paths {output}");
             }
         }
 
@@ -154,7 +153,14 @@ namespace AddressableAssetTool.Graph
 
         public void AddEdge(ResourceNode from, string fromName, ResourceNode to, string toName, float weight = 1.0f)
         {
-            adjacencyList[(from, to)].Add((fromName, toName));
+            if(adjacencyList.ContainsKey((from, to)))
+            {
+                adjacencyList[(from, to)].Add((fromName, toName));
+                return;
+            }
+            adjacencyList.Add((from, to), new List<(string, string)> { (fromName, toName) });
+
+
         }
 
         public void RemoveEdge(ResourceNode from, ResourceNode to)
@@ -173,15 +179,6 @@ namespace AddressableAssetTool.Graph
             }
             return new List<(string, string)>();
         }
-
-        //public List<ResourceNode> GetInDegree(ResourceNode node)
-        //{
-        //    if (reverseAdjacencyList.ContainsKey(node))
-        //    {
-        //        return reverseAdjacencyList[node].Select(edge => edge.From).ToList();
-        //    }
-        //    return new List<ResourceNode>();
-        //}
     }
 
     public partial class ResourceNode
@@ -203,11 +200,8 @@ namespace AddressableAssetTool.Graph
         {
             if (node == null)
                 throw new ArgumentNullException(nameof(node));
-
-            //Debug.LogError("node " + this.ResourceId + " add " + node.ResourceId);
             References[node.ResourceId] = node;
             node.ReferencedBy[this.ResourceId] = this;
-            //Debug.LogError("node " + node.ResourceId + " referby " + this.ResourceId);
         }
 
         public bool HasReference(ResourceNode node)
@@ -226,7 +220,5 @@ namespace AddressableAssetTool.Graph
             References.TryRemove(node.ResourceId, out _);
             node.ReferencedBy.TryRemove(this.ResourceId, out _);
         }
-
-
     }
 }

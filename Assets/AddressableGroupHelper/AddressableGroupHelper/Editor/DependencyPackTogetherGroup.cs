@@ -3,20 +3,21 @@ using UnityEditor.Experimental.GraphView;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
+using UnityEditor.AddressableAssets.Settings;
 
 namespace AddressableAssetTool.Graph
 {
-    internal class AddressableHoleGroup : AddressableGraphBaseGroup
+    internal class DependencyPackTogetherGroup : AddressableGraphBaseGroup
     {
         private AddressableAssetRule _target;
         private List<Node> mainNodes = new List<Node>();
 
-        public AddressableHoleGroup(Object obj, AddressableDependenciesGraph addressableDependenciesGraph) : base(obj, addressableDependenciesGraph)
+        public DependencyPackTogetherGroup(Object obj, GraphWindow addressableDependenciesGraph) : base(obj, addressableDependenciesGraph)
         {
         }
 
         internal override void DrawGroup(GraphView m_GraphView, EventCallback<GeometryChangedEvent, GraphBaseGroup> UpdateGroupDependencyNodePlacement,
-            AddressableDependenciesGraph graphWindow)
+            GraphWindow graphWindow)
         {
             _assetRulePath = AssetDatabase.GetAssetPath(_assetRuleObj);
 
@@ -37,7 +38,7 @@ namespace AddressableAssetTool.Graph
                 inDegree = node.ReferencedBy.Count;
                 outDegree = node.References.Count;
             }
-            var mainNode = CreateNode(_assetRuleObj, _assetRulePath, true, outDegree, graphWindow.m_GUIDNodeLookup, inDegree);
+            var mainNode = CreateNode(_assetRuleObj, assetGUID, true, outDegree, graphWindow.m_GUIDNodeLookup, inDegree);
             mainNode.userData = new GraphViewNodeUserData() { Depth = 0, Guid = assetGUID };
 
             Rect position = new Rect(0, 0, 0, 0);
@@ -111,11 +112,11 @@ namespace AddressableAssetTool.Graph
             );
         }
 
-        internal override Node CreateNode(Object obj, string assetPath, bool prefabCheck, int dependencyAmount, Dictionary<string, Node> m_GUIDNodeLookup,
+        internal override Node CreateNode(Object obj, string assetGUID, bool prefabCheck, int dependencyAmount, Dictionary<string, Node> m_GUIDNodeLookup,
            int inDegree = 0)
         {
             Node resultNode;
-            string assetGUID = AssetDatabase.AssetPathToGUID(assetPath);
+            //string assetGUID = AssetDatabase.AssetPathToGUID(assetPath);
             if (m_GUIDNodeLookup.TryGetValue(assetGUID, out resultNode))
             {
                 return resultNode;
@@ -132,7 +133,7 @@ namespace AddressableAssetTool.Graph
                 }
                 };
 
-                objNode.extensionContainer.style.backgroundColor = new Color(0.24f, 0.24f, 0.24f, 0.8f);
+                objNode.extensionContainer.style.backgroundColor = AddressaableToolKey.DefaultNodeBackgroundColor;
 
                 #region Select button
                 objNode.titleContainer.Add(new Button(() =>
@@ -239,7 +240,7 @@ namespace AddressableAssetTool.Graph
                 realPort.RegisterCallback<MouseUpEvent>(OnInPortMouseUp);
                 realPort.userData = DGTool.GetNodeData(realPort.userData, assetGUID);
                 var data = realPort.userData as GraphViewNodeUserData;
-                //Debug.LogError(data.Guid);
+                //IGGDebug.LogError(data.Guid);
                 objNode.inputContainer.Add(realPort);
                 //}
 
@@ -270,7 +271,6 @@ namespace AddressableAssetTool.Graph
 
         internal override void SetPosition(Rect pos)
         {
-            throw new System.NotImplementedException();
         }
 
         internal override bool IsReliance(string assetPath, out Node dependencyNode)
@@ -283,12 +283,12 @@ namespace AddressableAssetTool.Graph
             throw new System.NotImplementedException();
         }
 
-        internal override bool IsDependence(string dependencyString, out NodeDepenData[] data, UnityEditor.AddressableAssets.Settings.AddressableAssetEntry item =null)
+        internal override bool IsDependence(string dependencyString, out NodeDepenData[] data, AddressableAssetEntry item = null, string groupName = null)
         {
             throw new System.NotImplementedException();
         }
 
-        internal override bool IsReliance(string assetPath, out NodeDepenData[] data, UnityEditor.AddressableAssets.Settings.AddressableAssetEntry item = null)
+        internal override bool IsReliance(string assetPath, out NodeDepenData[] data, AddressableAssetEntry item = null, string groupName = null)
         {
             throw new System.NotImplementedException();
         }

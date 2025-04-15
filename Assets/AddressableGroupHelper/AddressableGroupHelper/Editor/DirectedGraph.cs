@@ -90,23 +90,23 @@ namespace AddressableAssetTool.DirectedGraph
 
         public void PrintGraph()
         {
-            Debug.LogError("Adjacency List:");
+            com.igg.core.IGGDebug.LogError("Adjacency List:");
             foreach (var kvp in adjacencyList)
             {
-                Debug.LogError(kvp.Key.Name + " -> ");
+                com.igg.core.IGGDebug.LogError(kvp.Key.Name + " -> ");
                 foreach (var edge in kvp.Value)
                 {
-                    Debug.LogError(edge.To.Name + "(" + edge.Weight + ") ");
+                    com.igg.core.IGGDebug.LogError(edge.To.Name + "(" + edge.Weight + ") ");
                 }
             }
 
-            Debug.LogError("Reverse Adjacency List:");
+            com.igg.core.IGGDebug.LogError("Reverse Adjacency List:");
             foreach (var kvp in reverseAdjacencyList)
             {
-                Debug.LogError(kvp.Key.Name + " <- ");
+                com.igg.core.IGGDebug.LogError(kvp.Key.Name + " <- ");
                 foreach (var edge in kvp.Value)
                 {
-                    Debug.LogError(edge.From.Name + "(" + edge.Weight + ") ");
+                    com.igg.core.IGGDebug.LogError(edge.From.Name + "(" + edge.Weight + ") ");
                 }
             }
         }

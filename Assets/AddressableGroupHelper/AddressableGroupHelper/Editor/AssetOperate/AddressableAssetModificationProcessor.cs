@@ -11,7 +11,7 @@ namespace AddressableAssetTool
         private static string ruleFilter = string.Format("t:ScriptableObject l:{0}", AddressaableToolKey.ScriptObjAssetLabel);
         private static AssetMoveResult OnWillMoveAsset(string sourcePath, string destinationPath)
         {
-            //Debug.LogError("Source path: " + sourcePath + ". Destination path: " + destinationPath + ".");
+            //IGGDebug.LogError("Source path: " + sourcePath + ". Destination path: " + destinationPath + ".");
 
             OnMoveAsset(sourcePath, destinationPath);
 
@@ -27,14 +27,14 @@ namespace AddressableAssetTool
                 return;
             }
 
-            
+
             string sourceDir = Path.GetDirectoryName(sourcePath);
             sourceDir = sourceDir.Replace("\\", "/");
             AddressableAssetRule sourceRule = GetRule(sourceDir);
 
             string destinationDirectory = Path.GetDirectoryName(destinationPath);
             destinationDirectory = destinationDirectory.Replace("\\", "/");
-            //Debug.LogError("Destination path: " + destinationDirectory);
+            //IGGDebug.LogError("Destination path: " + destinationDirectory);
             string assetGuid = AssetDatabase.AssetPathToGUID(sourcePath);
             AddressableAssetRule destinationRule = GetRule(destinationDirectory);
 
@@ -68,7 +68,7 @@ namespace AddressableAssetTool
                 var rule = AssetDatabase.LoadAssetAtPath<AddressableAssetRule>(assetPath);
                 if (rule != null && rule.IsRuleUsed)
                 {
-                    //Debug.LogError("get " + assetPath);
+                    //IGGDebug.LogError("get " + assetPath);
                     return rule;
                 }
             }
@@ -76,7 +76,7 @@ namespace AddressableAssetTool
             if (index != -1)
             {
                 string parentDir = destinationDirectory.Substring(0, index);
-                //Debug.LogError("parentDir " + parentDir);
+                //IGGDebug.LogError("parentDir " + parentDir);
                 return GetRule(parentDir);
             }
             return null;
